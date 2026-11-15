@@ -1,0 +1,2448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Vanya Living</title>
+  <!-- Fonts: FELGINE REGULAR (title) loaded locally or via @font-face; Avenir (body) via system stack -->
+  <style>
+    /* â”€â”€ FELGINE REGULAR: add your font file to the project and update the src path â”€â”€ */
+    @font-face {
+      font-family: 'Felgine';
+      src: local('Felgine Regular'), local('Felgine'),
+        url('fonts/Felgine-Regular.woff2') format('woff2'),
+        url('fonts/Felgine-Regular.woff') format('woff'),
+        url('fonts/Felgine-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      /* â”€â”€ Brand palette â”€â”€ */
+      --caramel: #CCA975;
+      /* primary accent (was amber)        */
+      --olive: #6B6F4E;
+      /* dark background / ink (was moss)  */
+      --cream: #FFFDF0;
+      /* light surface / text (was mist)   */
+
+      /* â”€â”€ Derived tones â”€â”€ */
+      --deep: #2f3120;
+      /* deeper olive for hero             */
+      --bark: #5c4a2a;
+      /* warm mid-tone                     */
+      --lichen: #d6c9a8;
+      /* muted cream for subtext           */
+      --ink: #2d2e1c;
+      /* darkest text on light bg          */
+      --fern: #6B6F4E;
+      /* accent green kept for tree badges */
+
+      /* â”€â”€ Typography â”€â”€ */
+      --serif: 'Felgine', 'Georgia', serif;
+      --sans: 'Avenir', 'Avenir Next', 'Century Gothic', system-ui, sans-serif;
+
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      color-scheme: light dark;
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px);
+      scroll-behavior: smooth
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: inherit
+    }
+
+    body {
+      margin: 0;
+      background: var(--olive);
+      color: var(--cream);
+      font: 400 17px/1.6 var(--sans)
+    }
+
+    a {
+      color: inherit
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--caramel);
+      outline-offset: 3px
+    }
+
+    /* â”€â”€ Hero â”€â”€ */
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background: var(--deep)
+    }
+
+    .hero canvas,
+    .hero video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg,
+          rgba(47, 49, 32, .60) 0%,
+          rgba(47, 49, 32, 0) 30%,
+          rgba(47, 49, 32, .40) 55%,
+          var(--olive) 100%);
+      pointer-events: none
+    }
+
+    /* â”€â”€ Nav â”€â”€ */
+        nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px clamp(18px, 5vw, 56px);
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: none;
+    }
+
+    .logo {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center
+    }
+
+    .logo-img {
+      height: clamp(32px, 4vw, 48px);
+      width: auto;
+      display: block;
+      object-fit: contain
+    }
+
+    .footer-logo {
+      height: clamp(28px, 3.5vw, 40px);
+      width: auto;
+      display: block;
+      margin: 0 auto 14px;
+      opacity: .8;
+      filter: brightness(1.5)
+    }
+
+    nav a.l {
+      font-weight: 500;
+      font-size: 15px;
+      text-decoration: none;
+      margin-left: 22px;
+      opacity: .9;
+      font-family: var(--sans)
+    }
+
+    /* â”€â”€ Hero content â”€â”€ */
+    .hero-in {
+      position: relative;
+      z-index: 2;
+      padding: 0 clamp(18px, 5vw, 56px) clamp(40px, 8vh, 84px);
+      max-width: 980px
+    }
+
+    h1 {
+      font: 400 clamp(40px, 9vw, 98px)/.98 var(--serif);
+      margin: 0 0 20px;
+      letter-spacing: -.01em;
+      color: var(--cream);
+      text-shadow: 0 2px 32px rgba(0, 0, 0, .45)
+    }
+
+    .lead {
+      font-size: clamp(17px, 2.2vw, 21px);
+      max-width: 520px;
+      margin: 0 0 28px;
+      color: var(--lichen);
+      font-family: var(--sans)
+    }
+
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center
+    }
+
+    /* â”€â”€ Buttons â”€â”€ */
+    .btn {
+      display: inline-block;
+      padding: 15px 26px;
+      border-radius: 999px;
+      background: var(--caramel);
+      color: var(--ink);
+      font-weight: 600;
+      text-decoration: none;
+      border: 0;
+      cursor: pointer;
+      font: 600 16px var(--sans);
+      transition: transform .2s, box-shadow .2s
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(204, 169, 117, .35)
+    }
+
+    .ghost {
+      background: transparent;
+      color: var(--cream);
+      border: 1px solid rgba(255, 253, 240, .45)
+    }
+
+    .ghost:hover {
+      background: rgba(255, 253, 240, .08)
+    }
+
+    /* â”€â”€ Live pill â”€â”€ */
+    .pill {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 22px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(47, 49, 32, .6);
+      backdrop-filter: blur(8px);
+      font-size: 14px;
+      color: var(--lichen);
+      font-family: var(--sans)
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--caramel);
+      box-shadow: 0 0 10px var(--caramel);
+      animation: p 2.4s infinite
+    }
+
+    @keyframes p {
+      50% {
+        opacity: .35
+      }
+    }
+
+    /* â”€â”€ Ticker â”€â”€ */
+    .ticker {
+      background: var(--caramel);
+      color: var(--ink);
+      overflow: hidden;
+      white-space: nowrap;
+      font-weight: 600;
+      font-size: 15px;
+      font-family: var(--sans)
+    }
+
+    .ticker div {
+      display: inline-block;
+      padding: 11px 0;
+      animation: t 38s linear infinite
+    }
+
+    .ticker span {
+      margin: 0 28px
+    }
+
+    @keyframes t {
+      to {
+        transform: translateX(-50%)
+      }
+    }
+
+    /* â”€â”€ Sections â”€â”€ */
+    section {
+      padding: clamp(56px, 9vw, 110px) clamp(18px, 5vw, 56px);
+      max-width: 1240px;
+      margin: 0 auto
+    }
+
+    #shop h2 {
+      text-align: center;
+    }
+
+    h2 {
+      font: 400 clamp(32px, 5vw, 56px)/1.05 var(--serif);
+      margin: 0 0 14px;
+      letter-spacing: -.01em;
+      color: var(--cream)
+    }
+
+    .sub {
+      color: var(--lichen);
+      max-width: 560px;
+      margin: 0 0 32px;
+      font-family: var(--sans)
+    }
+
+    /* â”€â”€ Filter chips â”€â”€ */
+    .chips {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 28px
+    }
+
+    .chip {
+      flex: none;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(204, 169, 117, .35);
+      background: none;
+      color: var(--cream);
+      font: 500 15px var(--sans);
+      cursor: pointer;
+      transition: background .18s, color .18s
+    }
+
+    .chip[aria-pressed=true] {
+      background: var(--caramel);
+      color: var(--ink);
+      border-color: var(--caramel)
+    }
+
+    /* â”€â”€ Product grid â”€â”€ */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 22px
+    }
+
+    .card {
+      background: #3a3c26;
+      border-radius: 22px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column
+    }
+
+    .card svg,
+    .card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+    }
+
+    .card .b {
+      padding: 18px 20px 22px
+    }
+
+    .card h3 {
+      font: 400 22px var(--serif);
+      margin: 0 0 4px;
+      color: var(--cream);
+      letter-spacing: .01em
+    }
+
+    .from {
+      font-size: 15px;
+      color: var(--lichen);
+      margin: 0 0 14px;
+      font-family: var(--sans)
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .price {
+      font: 600 19px var(--sans);
+      color: var(--caramel)
+    }
+
+    .add {
+      border: 1px solid var(--caramel);
+      color: var(--caramel);
+      background: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font: 600 14px var(--sans);
+      cursor: pointer;
+      transition: background .18s, color .18s
+    }
+
+    .add:hover,
+    .add.on {
+      background: var(--caramel);
+      color: var(--ink)
+    }
+
+    .tree {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--fern);
+      font-family: var(--sans)
+    }
+
+    /* â”€â”€ Light band â”€â”€ */
+    .band {
+      background: var(--cream);
+      color: var(--ink);
+      max-width: none;
+      padding: 0
+    }
+
+    /* ── Features Carousel ── */
+    .feat-track-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    .feat-marquee {
+      overflow: hidden;
+      width: 100%;
+    }
+    .feat-track {
+      display: flex;
+      gap: 24px;
+      padding: 12px clamp(18px,5vw,56px) 32px;
+      /* animation set by JS after cloning */
+      will-change: transform;
+    }
+    @keyframes featScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(var(--feat-shift)); }
+    }
+    .feat-track.running {
+      animation: featScroll var(--feat-dur, 32s) linear infinite;
+    }
+    .feat-track.running:hover {
+      animation-play-state: paused;
+    }
+    .feat-card {
+      flex: 0 0 280px;
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(107,111,78,0.10);
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+      padding: 20px 18px;
+      gap: 16px;
+      transition: box-shadow .2s;
+    }
+    .feat-card:hover { box-shadow: 0 8px 32px rgba(107,111,78,0.20); }
+    .feat-card img {
+      width: 40%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .feat-card-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .feat-card h3 {
+      font: 400 16px var(--serif);
+      color: var(--olive);
+      margin: 0 0 6px;
+      letter-spacing: .01em;
+    }
+    .feat-card p {
+      font: 400 11px/1.6 var(--sans);
+      color: #6b6244;
+      margin: 0;
+    }
+    .feat-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      background: #C2613F;
+      color: #F3E9DC;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      transition: background .2s;
+    }
+    .feat-arrow:hover { background: #a8512f; }
+    .feat-prev { left: 8px; }
+    .feat-next { right: 8px; }
+    @media(max-width:700px) {
+      .feat-card { flex: 0 0 72vw; }
+    }
+
+    .band .in {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: clamp(56px, 9vw, 100px) clamp(18px, 5vw, 56px);
+      display: grid;
+      gap: 40px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))
+    }
+
+    .band h2 {
+      grid-column: 1/-1;
+      max-width: 700px;
+      color: var(--ink)
+    }
+
+    .band h3 {
+      font: 400 22px var(--serif);
+      margin: 0 0 8px;
+      color: var(--ink);
+      letter-spacing: .01em
+    }
+
+    .band p {
+      margin: 0;
+      color: #5a5435;
+      font-family: var(--sans)
+    }
+
+    .count {
+      font: 400 clamp(48px, 7vw, 80px)/1 var(--serif);
+      color: var(--caramel);
+      display: block;
+      margin-bottom: 6px
+    }
+
+    /* â”€â”€ Newsletter â”€â”€ */
+    .join {
+      text-align: center;
+      max-width: 960px
+    }
+
+    .reach-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+      margin-top: 40px;
+      text-align: left;
+    }
+
+    .reach-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(194,97,63,0.25);
+      border-radius: 20px;
+      padding: 32px 28px;
+    }
+
+    .reach-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .reach-card h3 {
+      font: 400 22px var(--serif);
+      color: var(--cream);
+      margin: 0 0 8px;
+    }
+
+    .reach-card > p {
+      font: 400 13px/1.7 var(--sans);
+      color: var(--lichen);
+      margin: 0 0 20px;
+    }
+
+    .reach-card form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .reach-card input,
+    .reach-card textarea {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(204,169,117,.35);
+      background: rgba(107,111,78,0.25);
+      color: var(--cream);
+      font: 14px var(--sans);
+      resize: vertical;
+    }
+
+    .reach-card input::placeholder,
+    .reach-card textarea::placeholder {
+      color: var(--lichen);
+    }
+
+    .reach-card .btn {
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+
+    .reach-ok {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--caramel);
+      min-height: 1.4em;
+      font-family: var(--sans);
+    }
+
+    .ok {
+      margin-top: 16px;
+      color: var(--caramel);
+      min-height: 1.6em;
+      font-family: var(--sans)
+    }
+
+    /* â”€â”€ Footer â”€â”€ */
+    footer {
+      padding: 36px clamp(18px, 5vw, 56px) 48px;
+      color: var(--lichen);
+      font-size: 14px;
+      text-align: center;
+      font-family: var(--sans)
+    }
+
+    /* â”€â”€ Sound button â”€â”€ */
+    .hero .bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover
+    }
+
+    .snd {
+      position: absolute;
+      z-index: 3;
+      right: clamp(18px, 5vw, 56px);
+      bottom: clamp(40px, 8vh, 84px);
+      padding: 11px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 253, 240, .45);
+      background: rgba(47, 49, 32, .55);
+      backdrop-filter: blur(8px);
+      color: var(--cream);
+      font: 500 15px var(--sans);
+      cursor: pointer;
+      transition: background .18s, color .18s
+    }
+
+    .snd[aria-pressed=true] {
+      background: var(--caramel);
+      color: var(--ink);
+      border-color: var(--caramel)
+    }
+
+    @media(max-width:700px) {
+      .snd {
+        top: 72px;
+        bottom: auto;
+        right: 18px
+      }
+      .modal-box {
+        width: 95vw !important;
+        max-width: 95vw !important;
+      }
+    }
+
+    /* â”€â”€ Motion â”€â”€ */
+    @media(prefers-reduced-motion:reduce) {
+
+      .ticker div,
+      .dot {
+        animation: none
+      }
+
+      html {
+        scroll-behavior: auto
+      }
+    }
+
+    /* ── MODAL OVERLAY ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(45, 46, 28, .78);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border-radius: 24px;
+      width: 70vw;
+      max-width: 70vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid rgba(204, 169, 117, .2);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .55);
+      transform: translateY(22px);
+      transition: transform .3s
+    }
+
+    .modal-overlay.open .modal-box {
+      transform: translateY(0)
+    }
+
+    .modal-head {
+      position: relative;
+      padding: 22px 22px 0
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 253, 240, .08);
+      border: none;
+      color: var(--cream);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+      transition: background .15s;
+      z-index: 2
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 253, 240, .16)
+    }
+
+    .modal-img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-height: 420px;
+      overflow: hidden;
+      border-radius: 14px;
+      background: var(--deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-img svg {
+      width: 100%;
+      height: 100%
+    }
+
+    .modal-body {
+      padding: 20px 24px 28px
+    }
+
+    .modal-tag {
+      font: 12px var(--sans);
+      color: var(--fern);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 8px
+    }
+
+    .modal-title {
+      font: 400 clamp(20px, 3vw, 30px)/1.15 var(--serif);
+      color: var(--cream);
+      margin: 0 0 10px
+    }
+
+    .modal-desc {
+      font: 15px/1.75 var(--sans);
+      color: var(--lichen);
+      margin: 0 0 20px
+    }
+
+    .modal-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(204, 169, 117, .16)
+    }
+
+    .modal-price {
+      font: 400 clamp(20px, 2.5vw, 28px)/1 var(--serif);
+      color: var(--caramel)
+    }
+
+    .modal-material {
+      font: 13px var(--sans);
+      color: var(--lichen)
+    }
+
+    .modal-tree {
+      font: 13px var(--sans);
+      color: var(--fern);
+      margin-bottom: 20px
+    }
+
+    .modal-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+      margin-bottom: 20px
+    }
+
+    .modal-meta-item {
+      font: 12px var(--sans);
+      color: var(--lichen)
+    }
+
+    .modal-meta-item strong {
+      display: block;
+      color: var(--cream);
+      font-size: 13px;
+      margin-top: 2px
+    }
+
+    .modal-cta {
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .modal-cta .btn {
+      justify-content: center;
+      border-radius: 50px;
+      padding: 14px 24px;
+      font: 600 14px var(--sans);
+      letter-spacing: .05em
+    }
+
+    .card-wrap {
+      cursor: pointer
+    }
+
+    .card-wrap:focus-visible {
+      outline: 2px solid var(--caramel);
+      border-radius: var(--radius, 16px)
+    }
+
+    /* ── TOP RIGHT CART BUTTON ── */
+    .nav-cart-btn {
+      background: rgba(204, 169, 117, 0.16);
+      border: 1.5px solid var(--caramel);
+      color: var(--cream);
+      padding: 8px 18px;
+      border-radius: 50px;
+      font: 600 14px var(--sans);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .2s ease;
+      margin-left: 14px;
+    }
+
+    .nav-cart-btn:hover {
+      background: var(--caramel);
+      color: var(--ink);
+      transform: translateY(-1px);
+    }
+
+    .nav-cart-btn .cart-badge,
+    .floating-cart-btn .cart-badge {
+      background: var(--caramel);
+      color: var(--ink);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-cart-btn:hover .cart-badge {
+      background: var(--ink);
+      color: var(--cream);
+    }
+
+    /* Floating Cart Button (always visible on top right when scrolling) */
+    .floating-cart-btn {
+      position: fixed;
+      top: 18px;
+      right: clamp(16px, 4vw, 40px);
+      z-index: 120;
+      background: rgba(45, 46, 28, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1.5px solid rgba(204, 169, 117, 0.4);
+      color: var(--cream);
+      padding: 8px 18px;
+      border-radius: 50px;
+      font: 600 14px var(--sans);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      transition: transform .2s, border-color .2s, background .2s;
+    }
+
+    .floating-cart-btn:hover {
+      background: var(--card-bg);
+      border-color: var(--caramel);
+      transform: translateY(-2px);
+    }
+
+    /* ── CART DRAWER MODAL ── */
+    .cart-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 550;
+      background: rgba(45, 46, 28, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+    }
+
+    .cart-modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .cart-drawer {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 480px;
+      height: 100%;
+      max-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.55);
+      border-left: 1px solid rgba(204, 169, 117, 0.2);
+      transform: translateX(100%);
+      transition: transform .3s ease;
+    }
+
+    .cart-modal-overlay.open .cart-drawer {
+      transform: translateX(0);
+    }
+
+    .cart-drawer-header {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(204, 169, 117, 0.15);
+    }
+
+    .cart-drawer-header h3 {
+      font: 400 clamp(20px, 3vw, 24px)/1 var(--serif);
+      color: var(--cream);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cart-drawer-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255, 253, 240, 0.04);
+      border: 1px solid rgba(204, 169, 117, 0.12);
+      align-items: center;
+    }
+
+    .cart-item-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--deep);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-item-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cart-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cart-item-code {
+      font: 11px var(--sans);
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--caramel);
+      text-transform: uppercase;
+    }
+
+    .cart-item-name {
+      font: 400 15px/1.3 var(--serif);
+      color: var(--cream);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 2px 0;
+    }
+
+    .cart-item-price {
+      font: 14px var(--sans);
+      color: var(--lichen);
+    }
+
+    .cart-qty-ctrl {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 253, 240, 0.08);
+      border-radius: 20px;
+      padding: 2px 8px;
+      margin-top: 5px;
+    }
+
+    .cart-qty-btn {
+      background: transparent;
+      border: none;
+      color: var(--cream);
+      font-size: 16px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-qty-val {
+      font: 13px var(--sans);
+      font-weight: 600;
+      color: var(--cream);
+      min-width: 14px;
+      text-align: center;
+    }
+
+    .cart-item-remove {
+      background: transparent;
+      border: none;
+      color: #e07060;
+      cursor: pointer;
+      padding: 6px;
+      font-size: 16px;
+      opacity: .7;
+      transition: opacity .2s;
+    }
+
+    .cart-item-remove:hover {
+      opacity: 1;
+    }
+
+    .cart-drawer-footer {
+      padding: 20px 24px;
+      border-top: 1px solid rgba(204, 169, 117, 0.15);
+      background: rgba(45, 46, 28, 0.4);
+    }
+
+    .cart-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    .cart-total-label {
+      font: 14px var(--sans);
+      color: var(--lichen);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .cart-total-amount {
+      font: 400 24px/1 var(--serif);
+      color: var(--caramel);
+    }
+
+    /* WhatsApp order customer form */
+    .wa-form-group {
+      margin-bottom: 12px;
+    }
+
+    .wa-form-group label {
+      display: block;
+      font: 11px var(--sans);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--lichen);
+      margin-bottom: 5px;
+    }
+
+    .wa-input {
+      width: 100%;
+      background: rgba(255, 253, 240, 0.06);
+      border: 1px solid rgba(204, 169, 117, 0.25);
+      border-radius: 10px;
+      color: var(--cream);
+      font: 14px var(--sans);
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .2s;
+      box-sizing: border-box;
+    }
+
+    .wa-input:focus {
+      border-color: var(--caramel);
+    }
+
+    textarea.wa-input {
+      resize: vertical;
+      min-height: 54px;
+    }
+
+    .btn-whatsapp {
+      background: #C2613F;
+      color: #F3E9DC;
+      border: none;
+      border-radius: 50px;
+      padding: 13px 20px;
+      font: 600 14px var(--sans);
+      letter-spacing: .03em;
+      cursor: pointer;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(194, 97, 63, 0.35);
+      transition: transform .2s, background .2s, box-shadow .2s;
+    }
+
+    .btn-whatsapp:hover {
+      background: #a8512f;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(194, 97, 63, 0.50);
+    }
+
+    /* Direct Buy Now Modal */
+    .direct-buy-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 560;
+      background: rgba(45, 46, 28, 0.84);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+    }
+
+    .direct-buy-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .direct-buy-box {
+      background: var(--card-bg);
+      border-radius: 20px;
+      max-width: 480px;
+      width: 100%;
+      padding: 24px 26px;
+      border: 1px solid rgba(204, 169, 117, 0.25);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .6);
+      position: relative;
+      transform: translateY(20px);
+      transition: transform .3s ease;
+    }
+
+    .direct-buy-overlay.open .direct-buy-box {
+      transform: translateY(0);
+    }
+
+    .direct-prod-summary {
+      background: rgba(255, 253, 240, 0.05);
+      border: 1px solid rgba(204, 169, 117, 0.15);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .direct-prod-thumb {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--deep);
+      flex-shrink: 0;
+    }
+
+    .direct-prod-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="hero" id="top">
+    <video id="hv" class="bg" autoplay muted loop playsinline preload="auto" aria-hidden="true"
+      src="assets/1000288631.mp4"></video>
+    <nav>
+      <a class="logo" href="#top" aria-label="Vanya Living — home">
+        <img src="assets/vanya.logo.png" alt="Vanya Living" class="logo-img">
+      </a>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <a class="l" href="#shop">Shop</a>
+        <a class="l" href="#why">Our trees</a>
+        <a class="l" href="#join">Reach Us</a>
+        <button class="nav-cart-btn" id="openCartBtn" type="button" aria-label="Open Shopping Cart">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span>Cart</span>
+          <span class="cart-badge" id="navCartCount">0</span>
+        </button>
+      </div>
+    </nav>
+    <button class="snd" id="snd" type="button" aria-pressed="false">Turn sound on</button>
+    <div class="hero-in">
+      <h1>Furniture that remembers the forest.</h1>
+      <p class="lead">Every piece is made from reclaimed or certified wood, and for every one we ship, we check product
+        closely. Bring the Vanya Living home.</p>
+      <div class="btns">
+        <a class="btn" href="#shop">Walk into the collection</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="ticker" aria-hidden="true">
+    <div id="tk"></div>
+  </div>
+
+  <section id="shop">
+    <h2>Collection</h2>
+    <div class="chips" id="chips" role="group" aria-label="Filter by wood"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- ── Features Carousel ── -->
+  <div class="band" id="why" style="overflow:hidden; padding:60px 0;">
+    <div style="max-width:1200px; margin:0 auto; padding:0 clamp(18px,5vw,56px); width:100%; text-align:center;">
+      <h2 style="text-align:center; margin-bottom:40px; max-width:none; width:100%;">Our Trees</h2>
+    </div>
+    <div class="feat-track-wrap">
+      <div class="feat-marquee" id="featMarquee">
+        <div class="feat-track" id="featTrack">
+          <div class="feat-card"><img src="assets/Anti-Microbial.png" alt="Anti-Microbial"><div class="feat-card-text"><h3>Anti-Microbial</h3><p>Natural wood oils resist bacteria and mould, keeping your surfaces hygienically clean without chemicals.</p></div></div>
+          <div class="feat-card"><img src="assets/Artisanal Precision.png" alt="Artisanal Precision"><div class="feat-card-text"><h3>Artisanal Precision</h3><p>Every joint, curve and finish is hand-shaped by master craftsmen — no shortcuts, no compromise.</p></div></div>
+          <div class="feat-card"><img src="assets/DIY In Minutes Transformation.png" alt="DIY In Minutes"><div class="feat-card-text"><h3>DIY In Minutes</h3><p>Tool-free assembly means your space transforms in minutes, not hours. Simplicity built right in.</p></div></div>
+          <div class="feat-card"><img src="assets/Low Emssion Material.png" alt="Low Emission Material"><div class="feat-card-text"><h3>Low Emission Material</h3><p>FSC-certified, low-VOC finishes keep indoor air clean — better for your family and the planet.</p></div></div>
+          <div class="feat-card"><img src="assets/Safe corner Design.png" alt="Safe Corner Design"><div class="feat-card-text"><h3>Safe Corner Design</h3><p>Rounded edges and smooth corners protect little ones — thoughtfully designed for every home.</p></div></div>
+          <div class="feat-card"><img src="assets/Set it &amp; forget it.png" alt="Set it &amp; Forget it"><div class="feat-card-text"><h3>Set it &amp; Forget it</h3><p>Engineered for longevity with zero-maintenance surfaces that stay beautiful year after year.</p></div></div>
+          <div class="feat-card"><img src="assets/Small Box, Big Impact.png" alt="Small Box, Big Impact"><div class="feat-card-text"><h3>Small Box, Big Impact</h3><p>Flat-pack delivery reduces shipping emissions while delivering full-scale craftsmanship to your door.</p></div></div>
+          <div class="feat-card"><img src="assets/Weather-Proofed Elegance.png" alt="Weather-Proofed Elegance"><div class="feat-card-text"><h3>Weather-Proofed Elegance</h3><p>Treated for India's humid summers and dry winters — outdoor-grade protection, indoor-level beauty.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="join" id="join">
+    <h2>Reach Us</h2>
+    <p class="sub" style="margin-inline:auto">Partner with us, share your craft, or bring your vision to life with Vanya Living.</p>
+    <div class="reach-cards">
+
+      <!-- Design Submission -->
+      <div class="reach-card">
+        <div class="reach-icon">✏️</div>
+        <h3>Design Submission</h3>
+        <p>Have a furniture design or concept? Share it with our team and let's create something beautiful together.</p>
+        <form onsubmit="handleReach(event,'design')">
+          <input type="text" required placeholder="Your Name" aria-label="Name">
+          <input type="email" required placeholder="your@email.com" aria-label="Email">
+          <textarea rows="3" placeholder="Describe your design idea…" aria-label="Design idea"></textarea>
+          <button class="btn" type="submit">Submit Design</button>
+        </form>
+        <div class="ok reach-ok" id="ok-design" role="status"></div>
+      </div>
+
+      <!-- Become a Vendor -->
+      <div class="reach-card">
+        <div class="reach-icon">🤝</div>
+        <h3>Become Our Vendor</h3>
+        <p>Supply quality wood, materials, or finished pieces? We'd love to work with craftsmen and suppliers who share our values.</p>
+        <form onsubmit="handleReach(event,'vendor')">
+          <input type="text" required placeholder="Your Name / Business" aria-label="Name or Business">
+          <input type="email" required placeholder="your@email.com" aria-label="Email">
+          <input type="tel" placeholder="Phone Number" aria-label="Phone">
+          <textarea rows="3" placeholder="Tell us about your products or services…" aria-label="Vendor details"></textarea>
+          <button class="btn" type="submit">Apply as Vendor</button>
+        </form>
+        <div class="ok reach-ok" id="ok-vendor" role="status"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 Vanya Living Furniture. Made slowly, in the trees&rsquo; time.</p>
+    <p style="margin-top:10px;">
+      <button onclick="document.getElementById('privacyModal').classList.add('open')"
+        style="background:none;border:none;color:var(--caramel,#C2613F);font:13px var(--sans);cursor:pointer;text-decoration:underline;padding:0;">
+        Privacy Policy
+      </button>
+    </p>
+  </footer>
+
+  <!-- ── Privacy Policy Modal ── -->
+  <div id="privacyModal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Privacy Policy"
+    style="z-index:900;" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal-box" style="max-width:720px;width:90vw;padding:40px 36px;text-align:left;">
+      <button onclick="document.getElementById('privacyModal').classList.remove('open')"
+        style="position:absolute;top:16px;right:20px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--cream);">&#x2715;</button>
+      <h2 style="font:400 28px/1.2 var(--serif);margin:0 0 4px;color:var(--cream);">Privacy Policy</h2>
+      <p style="font:12px var(--sans);color:var(--lichen);margin:0 0 24px;">Effective Date: November 15, 2026 &nbsp;|&nbsp; Last Updated: November 15, 2026</p>
+
+      <div style="font:14px/1.8 var(--sans);color:var(--lichen);">
+        <p>At <strong style="color:var(--cream);">Vanya Living</strong> ("we", "our", or "us"), we deeply respect your privacy and are committed to protecting your personal information. Because of how our site is designed, we do not store your customer data, purchase history, or personal records on any remote servers.</p>
+
+        <h3 style="font:400 18px var(--serif);color:var(--caramel);margin:20px 0 6px;">1. Information We Do Not Collect or Store</h3>
+        <p>Unlike traditional e-commerce platforms, Vanya Living operates on a direct-to-messaging model:</p>
+        <ul style="margin:8px 0 8px 20px;padding:0;">
+          <li><strong style="color:var(--cream);">No Database Storage:</strong> We do not maintain a customer database, user accounts, or cloud storage of your personal details on our web servers.</li>
+          <li><strong style="color:var(--cream);">No Payment Data Storage:</strong> We do not collect, process, or store credit card numbers, bank details, or financial credentials on our website.</li>
+        </ul>
+
+        <h3 style="font:400 18px var(--serif);color:var(--caramel);margin:20px 0 6px;">2. Information Handled Locally on Your Device</h3>
+        <p>To make your browsing and shopping experience seamless, your browser utilises local storage mechanisms (localStorage):</p>
+        <ul style="margin:8px 0 8px 20px;padding:0;">
+          <li><strong style="color:var(--cream);">Shopping Cart &amp; Preferences:</strong> Items you add to your cart and temporary form details (such as your name and delivery address) are stored strictly on your own device.</li>
+          <li>You maintain full control over this data: clearing your browser cache or clicking "Order" immediately clears your local cart.</li>
+        </ul>
+
+        <h3 style="font:400 18px var(--serif);color:var(--caramel);margin:20px 0 6px;">3. Order Management via WhatsApp</h3>
+        <ul style="margin:8px 0 8px 20px;padding:0;">
+          <li><strong style="color:var(--cream);">How Orders Work:</strong> When you complete your cart or use the "Buy Now" feature, the site generates an itemised order summary containing your name, delivery address, and selected products.</li>
+          <li><strong style="color:var(--cream);">Transmission:</strong> This information is sent directly via WhatsApp (wa.me/919982998476) to our business communication line.</li>
+          <li><strong style="color:var(--cream);">WhatsApp's Privacy:</strong> Once sent, handling of your chat data is governed by <a href="https://www.whatsapp.com/legal/privacy-policy" target="_blank" style="color:var(--caramel);">WhatsApp's Privacy Policy</a>. We use these chats solely to fulfil your delivery and provide customer support.</li>
+        </ul>
+
+        <h3 style="font:400 18px var(--serif);color:var(--caramel);margin:20px 0 6px;">4. Communications and Form Submissions</h3>
+        <p>If you reach out through our "Reach Us" section:</p>
+        <ul style="margin:8px 0 8px 20px;padding:0;">
+          <li>Your input is transmitted via your device's default email client (mailto:vanya.living.care@gmail.com).</li>
+          <li>We use this correspondence exclusively to evaluate your proposal or coordinate partnerships. We do not sell, rent, or distribute your email to third parties.</li>
+        </ul>
+
+        <h3 style="font:400 18px var(--serif);color:var(--caramel);margin:20px 0 6px;">5. Cookies and Tracking Technologies</h3>
+        <p>Our website does not use advertising trackers, third-party analytics pixels, or behavioural profiling cookies. Local storage is used solely for technical functionality.</p>
+
+        <h3 style="font:400 18px var(--serif);color:var(--caramel);margin:20px 0 6px;">6. Data Security</h3>
+        <p>Because customer records are handled peer-to-peer through encrypted WhatsApp channels rather than stored on web databases, your exposure to remote data breaches is minimised.</p>
+
+        <h3 style="font:400 18px var(--serif);color:var(--caramel);margin:20px 0 6px;">7. Changes to This Privacy Policy</h3>
+        <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.</p>
+
+        <h3 style="font:400 18px var(--serif);color:var(--caramel);margin:20px 0 6px;">8. Contact Us</h3>
+        <p>Email: <a href="mailto:vanya.living.care@gmail.com" style="color:var(--caramel);">vanya.living.care@gmail.com</a><br>
+        WhatsApp: <a href="https://wa.me/919982998476" target="_blank" style="color:var(--caramel);">+91 99829 98476</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Product Modal ── -->
+  <div class="modal-overlay" id="productModal" role="dialog" aria-modal="true" aria-label="Product details">
+    <div class="modal-box">
+      <div class="modal-head">
+        <button class="modal-close" id="modalClose" aria-label="Close">&#x2715;</button>
+        <div class="modal-img-container" style="position:relative; width:100%; aspect-ratio:1/1; max-height:420px; overflow:hidden; border-radius:14px; background:var(--deep); display:flex; align-items:center; justify-content:center;">
+          <div class="modal-img" id="modalImg" style="width:100%; height:100%;"></div>
+          <!-- Multiple images navigation controls -->
+          <button class="modal-nav-btn prev" id="modalImgPrev" onclick="navigateModalImage(-1)" aria-label="Previous image" style="display:none; position:absolute; left:12px; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,253,240,0.3); font-size:18px; cursor:pointer; align-items:center; justify-content:center; z-index:5;">❮</button>
+          <button class="modal-nav-btn next" id="modalImgNext" onclick="navigateModalImage(1)" aria-label="Next image" style="display:none; position:absolute; right:12px; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,253,240,0.3); font-size:18px; cursor:pointer; align-items:center; justify-content:center; z-index:5;">❯</button>
+          <div id="modalImgCounter" style="display:none; position:absolute; bottom:12px; right:14px; background:rgba(0,0,0,0.7); color:var(--cream); padding:3px 10px; border-radius:50px; font-size:11px; font-weight:600; letter-spacing:1px; z-index:5;">1 / 1</div>
+        </div>
+        <!-- Thumbnails bar -->
+        <div class="modal-img-thumbs" id="modalImgThumbs" style="display:none; gap:8px; padding-top:10px; overflow-x:auto;"></div>
+      </div>
+      <div class="modal-body">
+        <p class="modal-tag" id="modalCategory"></p>
+        <h2 class="modal-title" id="modalTitle"></h2>
+        <p class="modal-desc" id="modalDesc"></p>
+        <div class="modal-price-row">
+          <span class="modal-price" id="modalPrice"></span>
+          <span class="modal-material" id="modalMaterial"></span>
+        </div>
+        <div class="modal-meta" id="modalMeta"></div>
+        <div class="modal-cta">
+          <button class="btn" id="modalAddCart" onclick="modalCartAction()">Add to Cart</button>
+          <button class="btn ghost" id="modalBuyNow" onclick="modalBuyAction()">Buy Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Cart Drawer Modal ── -->
+  <div class="cart-modal-overlay" id="cartModal" role="dialog" aria-modal="true" aria-label="Shopping Cart">
+    <div class="cart-drawer">
+      <div class="cart-drawer-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span>Your Cart</span>
+        </h3>
+        <button class="modal-close" id="cartCloseBtn" aria-label="Close Cart" style="position:static;">&#x2715;</button>
+      </div>
+
+      <div class="cart-drawer-body" id="cartItemsList">
+        <!-- Items dynamically rendered here -->
+      </div>
+
+      <div class="cart-drawer-footer" id="cartFooter">
+        <div class="cart-total-row">
+          <span class="cart-total-label">Subtotal</span>
+          <span class="cart-total-amount" id="cartTotalDisplay">₹0</span>
+        </div>
+
+        <div class="wa-form-group">
+          <label for="cartCustomerName">Your Name *</label>
+          <input type="text" id="cartCustomerName" class="wa-input" placeholder="e.g. Rahul Sharma" required>
+        </div>
+
+        <div class="wa-form-group">
+          <label for="cartCustomerAddress">Delivery Address *</label>
+          <textarea id="cartCustomerAddress" class="wa-input"
+            placeholder="House/Flat No., Street, Landmark, City, State, Pincode" required></textarea>
+        </div>
+
+        <button class="btn-whatsapp" id="cartWhatsAppBtn" onclick="checkoutCartWhatsApp()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.83a8.176 8.176 0 0 1-5.82 2.41h-.01c-1.46 0-2.89-.39-4.14-1.13l-.3-.18-3.08.81.82-3-.19-.31a8.214 8.214 0 0 1-1.26-4.43c0-4.54 3.7-8.24 8.24-8.24zm4.8 11.66c-.26-.13-1.54-.76-1.78-.85-.24-.09-.41-.13-.58.13-.17.26-.68.85-.83 1.02-.15.17-.3.19-.56.06-.26-.13-1.1-.4-2.1-1.28-.77-.69-1.3-1.54-1.45-1.8-.15-.26-.02-.4.11-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.32-.02-.45-.06-.13-.58-1.4-.8-1.92-.21-.51-.43-.44-.58-.45h-.5c-.17 0-.45.06-.68.32-.23.26-.89.87-.89 2.12s.91 2.46 1.04 2.63c.13.17 1.8 2.74 4.35 3.84.61.26 1.08.42 1.45.54.61.19 1.16.17 1.6.1.49-.07 1.54-.63 1.76-1.24.22-.61.22-1.13.15-1.24-.06-.11-.23-.17-.49-.3z" />
+          </svg>
+          <span>Order Cart</span>
+        </button>
+        <div style="font-size:11px;color:var(--lichen);text-align:center;margin-top:8px;">Sends order details</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Direct Buy Now Modal (Single Product) ── -->
+  <div class="direct-buy-overlay" id="buyNowModal" role="dialog" aria-modal="true" aria-label="Direct Buy Now">
+    <div class="direct-buy-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h3 style="font:400 22px var(--serif);color:var(--cream);margin:0;">Instant Order</h3>
+        <button class="modal-close" id="buyCloseBtn" aria-label="Close" style="position:static;">&#x2715;</button>
+      </div>
+
+      <div class="direct-prod-summary" id="directProdSummary">
+        <!-- Direct product details injected here -->
+      </div>
+
+      <div class="wa-form-group">
+        <label for="buyCustomerName">Customer Name *</label>
+        <input type="text" id="buyCustomerName" class="wa-input" placeholder="e.g. Ananya Roy" required>
+      </div>
+
+      <div class="wa-form-group">
+        <label for="buyCustomerAddress">Delivery Address *</label>
+        <textarea id="buyCustomerAddress" class="wa-input" placeholder="Full address with City, State, and Pincode"
+          required></textarea>
+      </div>
+
+      <button class="btn-whatsapp" id="directWhatsAppBtn" onclick="submitDirectBuyWhatsApp()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.83a8.176 8.176 0 0 1-5.82 2.41h-.01c-1.46 0-2.89-.39-4.14-1.13l-.3-.18-3.08.81.82-3-.19-.31a8.214 8.214 0 0 1-1.26-4.43c0-4.54 3.7-8.24 8.24-8.24zm4.8 11.66c-.26-.13-1.54-.76-1.78-.85-.24-.09-.41-.13-.58.13-.17.26-.68.85-.83 1.02-.15.17-.3.19-.56.06-.26-.13-1.1-.4-2.1-1.28-.77-.69-1.3-1.54-1.45-1.8-.15-.26-.02-.4.11-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.32-.02-.45-.06-.13-.58-1.4-.8-1.92-.21-.51-.43-.44-.58-.45h-.5c-.17 0-.45.06-.68.32-.23.26-.89.87-.89 2.12s.91 2.46 1.04 2.63c.13.17 1.8 2.74 4.35 3.84.61.26 1.08.42 1.45.54.61.19 1.16.17 1.6.1.49-.07 1.54-.63 1.76-1.24.22-.61.22-1.13.15-1.24-.06-.11-.23-.17-.49-.3z" />
+        </svg>
+        <span>Order Product</span>
+      </button>
+      <div style="font-size:11px;color:var(--lichen);text-align:center;margin-top:8px;">Instant direct purchase</div>
+    </div>
+  </div>
+
+  <!-- Firebase & Unified Cloud Data Layer -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-db.js"></script>
+
+  <script>
+    // ---- Constants ----
+    const WA_PHONE = '919982998476';
+    const STORE_KEY = 'vl_products';
+    const CART_KEY = 'vl_cart';
+    const CUSTOMER_KEY = 'vl_customer_info';
+
+    // ---- Hero Sound ----
+    const hv = document.getElementById('hv'), sb = document.getElementById('snd');
+    if (sb && hv) {
+      sb.addEventListener('click', () => {
+        hv.muted = !hv.muted;
+        if (!hv.muted) { hv.volume = .7; hv.play().catch(() => { }); }
+        sb.setAttribute('aria-pressed', String(!hv.muted));
+        sb.textContent = hv.muted ? 'Turn sound on' : 'Sound on · tap to mute';
+      });
+    }
+
+    // ---- Storage Helpers ----
+    function getProducts() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function getCart() {
+      try {
+        const raw = localStorage.getItem(CART_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveCart(cart) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+      updateCartBadges();
+    }
+
+    function getSavedCustomer() {
+      try {
+        const raw = localStorage.getItem(CUSTOMER_KEY);
+        return raw ? JSON.parse(raw) : { name: '', address: '' };
+      } catch (e) {
+        return { name: '', address: '' };
+      }
+    }
+
+    function saveCustomer(name, address) {
+      try {
+        localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ name, address }));
+      } catch (e) { }
+    }
+
+    function getProductCode(p) {
+      return p.code || ('VL-' + (p.id ? String(p.id).slice(-4) : '101'));
+    }
+
+    // ---- Cart Operations ----
+    function cartHas(id) {
+      return getCart().some(c => String(c.id) === String(id));
+    }
+
+    function cartToggle(p) {
+      if (cartHas(p.id)) {
+        cartRemove(p.id);
+      } else {
+        cartAdd(p);
+      }
+    }
+
+    function cartAdd(p) {
+      let cart = getCart();
+      const existing = cart.find(c => String(c.id) === String(p.id));
+      if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+      } else {
+        cart.push({
+          id: p.id,
+          code: getProductCode(p),
+          hsn: p.hsn || '',
+          name: p.name,
+          price: parseFloat(p.price) || 0,
+          material: p.material || '',
+          image: (p.images && p.images[0]) || p.image || '',
+          color: p.color || '#CCA975',
+          qty: 1,
+          ts: Date.now()
+        });
+      }
+      saveCart(cart);
+    }
+
+    function cartQtyPlus(id) {
+      let cart = getCart();
+      const item = cart.find(c => String(c.id) === String(id));
+      if (item) {
+        item.qty = (item.qty || 1) + 1;
+        saveCart(cart);
+        renderCart();
+      }
+    }
+
+    function cartQtyMinus(id) {
+      let cart = getCart();
+      const item = cart.find(c => String(c.id) === String(id));
+      if (item) {
+        if ((item.qty || 1) > 1) {
+          item.qty -= 1;
+        } else {
+          cart = cart.filter(c => String(c.id) !== String(id));
+        }
+        saveCart(cart);
+        renderCart();
+        draw();
+      }
+    }
+
+    function cartRemove(id) {
+      let cart = getCart().filter(c => String(c.id) !== String(id));
+      saveCart(cart);
+      renderCart();
+      draw();
+    }
+
+    function updateCartBadges() {
+      const cart = getCart();
+      const totalCount = cart.reduce((sum, item) => sum + (item.qty || 1), 0);
+      const badge1 = document.getElementById('navCartCount');
+
+      if (badge1) badge1.textContent = totalCount;
+
+    }
+
+    // ---- Product Visual SVG Generator (1:1 Ratio) ----
+    function renderProductVisual(p, idx) {
+      const cover = p.image || (p.images && p.images.find(x => !is3dItem(x)) ? getItemUrl(p.images.find(x => !is3dItem(x))) : '');
+      if (cover) {
+        return `<div style="width:100%;aspect-ratio:1/1;overflow:hidden;background:#181910;display:flex;align-items:center;justify-content:center;">
+      <img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block;">
+    </div>`;
+      }
+      const c = p.color || '#CCA975';
+      return `<svg viewBox="0 0 400 400" role="img" aria-label="${p.name}" style="width:100%;display:block;aspect-ratio:1/1;">
+    <defs>
+      <linearGradient id="pvg_${idx}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1e2215"/>
+        <stop offset="100%" stop-color="#2d301e"/>
+      </linearGradient>
+      <radialGradient id="pvr_${idx}" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="${c}" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="400" height="400" fill="url(#pvg_${idx})"/>
+    <rect width="400" height="400" fill="url(#pvr_${idx})"/>
+    <path d="M50 0v300M120 0v300M190 0v300M270 0v300M340 0v300" stroke="#000" stroke-width="4" opacity="0.12"/>
+    <rect y="300" width="400" height="100" fill="#12140d" opacity="0.8"/>
+    <g transform="translate(200, 160)">
+      <circle cx="0" cy="0" r="54" fill="${c}" opacity="0.15"/>
+      <circle cx="0" cy="0" r="36" fill="${c}" opacity="0.25"/>
+      <path d="M-24 20h48M-20 20V-10q0-8 8-8h24q8 0 8 8V20" fill="none" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/>
+    </g>
+    <text x="200" y="245" text-anchor="middle" font-family="'Felgine', Georgia, serif" font-size="20" fill="#FFFDF0" opacity="0.95">${p.name}</text>
+    <text x="200" y="270" text-anchor="middle" font-family="'Avenir', system-ui, sans-serif" font-size="12" letter-spacing="1px" fill="${c}" opacity="0.9">${(p.category || 'VANYA PIECE').toUpperCase()}</text>
+    <g fill="#6B6F4E" opacity="0.9">
+      <circle cx="48" cy="350" r="5"/><circle cx="60" cy="356" r="4"/>
+      <circle cx="350" cy="352" r="5"/><circle cx="338" cy="358" r="4"/>
+    </g>
+  </svg>`;
+    }
+
+    // ---- Render Shop Grid ----
+    let curCategory = 'All';
+
+    function draw() {
+      const all = getProducts();
+      const chipsEl = document.getElementById('chips');
+      const gridEl = document.getElementById('grid');
+
+      const rawCats = all.map(p => p.category).filter(Boolean);
+      const categories = ['All', ...new Set(rawCats)];
+
+      if (chipsEl) {
+        if (all.length > 0) {
+          chipsEl.innerHTML = categories.map(cat =>
+            `<button class="chip" aria-pressed="${cat === curCategory}" data-cat="${cat}">${cat === 'All' ? 'All Pieces' : cat}</button>`
+          ).join('');
+        } else {
+          chipsEl.innerHTML = '';
+        }
+      }
+
+      if (all.length === 0) {
+        gridEl.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 64px 24px; background: rgba(58, 60, 38, 0.35); border-radius: 20px; border: 1.5px dashed rgba(204, 169, 117, 0.3); margin: 20px 0;">
+        <div style="font-size: 42px; margin-bottom: 12px; opacity: 0.85;">🌲</div>
+        <h3 style="font: 400 clamp(22px, 3vw, 28px)/1.2 var(--serif); color: var(--cream); margin-bottom: 10px;">No Products in Collection Yet</h3>
+        <p style="font: 15px/1.6 var(--sans); color: var(--lichen); max-width: 480px; margin: 0 auto 24px;">Use the Product Manager to add your handcrafted furniture pieces.</p>
+        <a href="productmanager.html" class="btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+          <span>Open Product Manager</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    `;
+        return;
+      }
+
+      const filtered = curCategory === 'All' ? all : all.filter(p => p.category === curCategory);
+
+      if (filtered.length === 0) {
+        gridEl.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--lichen); font-size: 15px;">
+        No products found in category "${curCategory}".
+      </div>
+    `;
+        return;
+      }
+
+      gridEl.innerHTML = filtered.map((p, i) => {
+        const isAdded = cartHas(p.id);
+        const priceVal = parseFloat(p.price) || 0;
+        const priceStr = priceVal ? ('₹' + priceVal.toLocaleString('en-IN')) : '';
+        const code = getProductCode(p);
+        const has3d = p.model3d || ((p.code && p.code.toUpperCase() === 'YASH1') || (p.name && p.name.toUpperCase().includes('YASH1'))) || (p.images && p.images.some(x => is3dItem(x)));
+
+        return `
+      <article class="card card-wrap" tabindex="0" role="button" aria-label="View ${p.name}" data-pid="${p.id}">
+        <div class="card-visual-click" onclick="openModal('${p.id}')" style="position:relative; cursor:pointer;">
+          ${renderProductVisual(p, i)}
+          ${p.badge ? `<span style="position:absolute; top:10px; right:10px; background:var(--terra,#C2613F); color:#F3E9DC; padding:4px 10px; border-radius:50px; font-size:10px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; z-index:3; box-shadow:0 2px 8px rgba(0,0,0,0.25);">${p.badge}</span>` : ""}
+          ${p.images && p.images.length > 1 ? `<span style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.7); color:var(--cream); padding:3px 8px; border-radius:50px; font-size:11px; font-weight:600; letter-spacing:0.5px;">📷 ${p.images.length}</span>` : ''}
+        </div>
+        <div class="b">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--caramel);margin-bottom:3px;">CODE: ${code}</div>
+          <h3 onclick="openModal('${p.id}')" style="cursor:pointer;">${p.name}</h3>
+          <p class="from">${p.material || p.category || 'Handcrafted'}</p>
+          <div class="row">
+            <span class="price">${priceStr}</span>
+            <button class="add ${isAdded ? 'on' : ''}" data-pid="${p.id}" type="button">
+              ${isAdded ? 'Added ✓' : 'Add to cart'}
+            </button>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button class="btn direct-buy-btn" data-pid="${p.id}" type="button" style="width:100%;justify-content:center;padding:9px 12px;font-size:13px;border-radius:50px;">
+              <span>Buy Now ⚡</span>
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+      }).join('');
+    }
+
+    // ---- Event Listeners for Grid & Actions ----
+    document.addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (chip) {
+        curCategory = chip.dataset.cat;
+        draw();
+        return;
+      }
+
+      const addBtn = e.target.closest('.add');
+      if (addBtn) {
+        e.stopPropagation();
+        const pid = addBtn.dataset.pid;
+        const all = getProducts();
+        const p = all.find(x => String(x.id) === String(pid));
+        if (p) {
+          cartToggle(p);
+          draw();
+          renderCart();
+          if (activeProductId === String(pid)) {
+            const modalBtn = document.getElementById('modalAddCart');
+            if (modalBtn) {
+              modalBtn.textContent = cartHas(pid) ? '✓ Added to Cart' : 'Add to Cart';
+            }
+          }
+        }
+        return;
+      }
+
+      const buyBtn = e.target.closest('.direct-buy-btn');
+      if (buyBtn) {
+        e.stopPropagation();
+        const pid = buyBtn.dataset.pid;
+        openDirectBuy(pid);
+        return;
+      }
+    });
+
+    // ---- 3D Viewer & Media Helpers ----
+    function is3dItem(item) {
+      if (!item) return false;
+      if (typeof item === 'object' && item.type === '3d') return true;
+      if (typeof item === 'string') {
+        const clean = item.split('?')[0].toLowerCase().trim();
+        return clean.endsWith('.html') || clean.endsWith('.htm') || clean.includes('/3d') || clean.includes('model');
+      }
+      return false;
+    }
+
+    function getItemUrl(item) {
+      if (!item) return '';
+      if (typeof item === 'object') return item.url || '';
+      return String(item);
+    }
+
+    // ---- Multiple Image Modal Navigation with 3D as Last Slide ----
+    let modalCurrentImageList = [];
+    let modalCurrentImageIdx = 0;
+
+    function updateModalImageDisplay() {
+      const imgEl = document.getElementById('modalImg');
+      const prevBtn = document.getElementById('modalImgPrev');
+      const nextBtn = document.getElementById('modalImgNext');
+      const counterEl = document.getElementById('modalImgCounter');
+      const thumbsEl = document.getElementById('modalImgThumbs');
+
+      if (!modalCurrentImageList || modalCurrentImageList.length === 0) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (counterEl) counterEl.style.display = 'none';
+        if (thumbsEl) thumbsEl.style.display = 'none';
+        return;
+      }
+
+      if (modalCurrentImageList.length <= 1) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (counterEl) counterEl.style.display = 'none';
+      } else {
+        if (prevBtn) prevBtn.style.display = 'flex';
+        if (nextBtn) nextBtn.style.display = 'flex';
+        if (counterEl) {
+          counterEl.style.display = 'block';
+        }
+      }
+
+      const currentSlide = modalCurrentImageList[modalCurrentImageIdx];
+      const is3d = is3dItem(currentSlide);
+      const currentSrc = getItemUrl(currentSlide);
+
+      if (counterEl && modalCurrentImageList.length > 1) {
+        counterEl.textContent = is3d
+          ? `${modalCurrentImageIdx + 1} / ${modalCurrentImageList.length} (3D View)`
+          : `${modalCurrentImageIdx + 1} / ${modalCurrentImageList.length}`;
+      }
+
+      if (imgEl) {
+        if (is3d) {
+          imgEl.innerHTML = `
+            <div style="position:relative; width:100%; height:100%; background:#1c1d13; border-radius:14px; overflow:hidden;">
+              <iframe src="${currentSrc}" title="3D Interactive Viewer" style="width:100%; height:100%; border:none; display:block;" allow="camera; gyroscope; accelerometer; xr-spatial-tracking; fullscreen" allowfullscreen></iframe>
+              <div style="position:absolute; top:12px; left:12px; background:rgba(30,32,20,0.88); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(204,169,117,0.4); color:var(--caramel); padding:5px 12px; border-radius:50px; font-size:11px; font-weight:700; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; pointer-events:none; z-index:3;">
+                <span>🧊 3D VIEW (INTERACTIVE)</span>
+              </div>
+              <a href="${currentSrc}" target="_blank" rel="noopener" style="position:absolute; bottom:12px; left:12px; background:rgba(0,0,0,0.72); backdrop-filter:blur(6px); color:var(--cream); border:1px solid rgba(204,169,117,0.3); padding:5px 12px; border-radius:6px; font-size:11px; text-decoration:none; display:inline-flex; align-items:center; gap:4px; z-index:3;">
+                <span>Open Fullscreen ↗</span>
+              </a>
+            </div>
+          `;
+        } else {
+          imgEl.innerHTML = `<img src="${currentSrc}" alt="Product Image" style="width:100%; height:100%; object-fit:cover; display:block;">`;
+        }
+      }
+
+      if (thumbsEl && modalCurrentImageList.length > 1) {
+        thumbsEl.style.display = 'flex';
+        thumbsEl.innerHTML = modalCurrentImageList.map((item, idx) => {
+          const itemIs3d = is3dItem(item);
+          const itemSrc = getItemUrl(item);
+          const isActive = idx === modalCurrentImageIdx;
+
+          if (itemIs3d) {
+            return `
+              <div onclick="setModalImageIndex(${idx})" style="width:52px; height:52px; border-radius:6px; overflow:hidden; cursor:pointer; flex-shrink:0; border:2px solid ${isActive ? 'var(--caramel)' : 'rgba(255,253,240,0.15)'}; opacity:${isActive ? 1 : 0.7}; background:#1e2014; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; transition:all .2s;" title="3D View (Last Slide)">
+                <span style="font-size:16px;">🧊</span>
+                <span style="font-size:8px; font-weight:700; color:var(--caramel); letter-spacing:0.5px;">3D VIEW</span>
+              </div>
+            `;
+          }
+
+          return `
+            <div onclick="setModalImageIndex(${idx})" style="width:52px; height:52px; border-radius:6px; overflow:hidden; cursor:pointer; flex-shrink:0; border:2px solid ${isActive ? 'var(--caramel)' : 'rgba(255,253,240,0.15)'}; opacity:${isActive ? 1 : 0.6}; transition:all .2s;">
+              <img src="${itemSrc}" alt="Thumb ${idx + 1}" style="width:100%; height:100%; object-fit:cover; display:block;">
+            </div>
+          `;
+        }).join('');
+      } else if (thumbsEl) {
+        thumbsEl.style.display = 'none';
+      }
+    }
+
+    function navigateModalImage(direction) {
+      if (!modalCurrentImageList.length) return;
+      modalCurrentImageIdx = (modalCurrentImageIdx + direction + modalCurrentImageList.length) % modalCurrentImageList.length;
+      updateModalImageDisplay();
+    }
+
+    function setModalImageIndex(idx) {
+      modalCurrentImageIdx = idx;
+      updateModalImageDisplay();
+    }
+
+    // ---- MODAL POPUP (Product Details) ----
+    let activeProductId = null;
+
+    function openModal(pid) {
+      const all = getProducts();
+      const p = all.find(x => String(x.id) === String(pid));
+      if (!p) return;
+      activeProductId = String(pid);
+
+      let rawList = Array.isArray(p.images) && p.images.length ? [...p.images] : (p.image ? [p.image] : []);
+      let model3d = p.model3d || (rawList.find(x => is3dItem(x)) ? getItemUrl(rawList.find(x => is3dItem(x))) : null);
+      if (!model3d && ((p.code && p.code.toUpperCase() === 'YASH1') || (p.name && p.name.toUpperCase().includes('YASH1')))) { model3d = 'assets/526-28.html'; }
+
+      // Separate photos and 3D items so 3D viewer is GUARANTEED to be the LAST SLIDE
+      const photoList = rawList.filter(x => !is3dItem(x));
+      if (model3d) {
+        photoList.push({ type: '3d', url: model3d });
+      }
+
+      modalCurrentImageList = photoList;
+      modalCurrentImageIdx = 0;
+      updateModalImageDisplay();
+
+      modalCurrentImageList = photoList;
+      modalCurrentImageIdx = 0;
+      updateModalImageDisplay();
+
+        const code = getProductCode(p);
+        const has3d = p.model3d || ((p.code && p.code.toUpperCase() === 'YASH1') || (p.name && p.name.toUpperCase().includes('YASH1'))) || (p.images && p.images.some(x => is3dItem(x)));
+      document.getElementById('modalCategory').textContent = `${(p.category || 'Collection').toUpperCase()} • CODE: ${code}`;
+      document.getElementById('modalTitle').textContent = p.name;
+      document.getElementById('modalDesc').textContent = p.description || 'Thoughtfully crafted with natural, reclaimed materials. Each piece is made to honour the forest and age gracefully in your home.';
+
+      const priceVal = parseFloat(p.price) || 0;
+      document.getElementById('modalPrice').textContent = priceVal ? ('₹' + priceVal.toLocaleString('en-IN')) : '';
+      document.getElementById('modalMaterial').textContent = p.material ? `•  ${p.material}` : '';
+
+      const metaItems = [];
+      if (code) metaItems.push({ label: 'Product Code', val: code });
+      if (p.hsn) metaItems.push({ label: 'HSN Code', val: p.hsn });
+      if (p.dimensions) metaItems.push({ label: 'Dimensions', val: p.dimensions });
+      if (p.weight) metaItems.push({ label: 'Weight', val: p.weight + ' kg' });
+      if (p.care) metaItems.push({ label: 'Care', val: p.care });
+
+      const metaEl = document.getElementById('modalMeta');
+      if (metaEl) {
+        metaEl.innerHTML = metaItems.map(m =>
+          `<div class="modal-meta-item">${m.label}<strong>${m.val}</strong></div>`
+        ).join('');
+      }
+
+      const isAdded = cartHas(pid);
+      document.getElementById('modalAddCart').textContent = isAdded ? '✓ Added to Cart' : 'Add to Cart';
+
+      const modal = document.getElementById('productModal');
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('productModal');
+      if (modal) modal.classList.remove('open');
+      document.body.style.overflow = '';
+      activeProductId = null;
+    }
+
+    function modalCartAction() {
+      if (!activeProductId) return;
+      const all = getProducts();
+      const p = all.find(x => String(x.id) === String(activeProductId));
+      if (!p) return;
+      cartToggle(p);
+      const isAdded = cartHas(activeProductId);
+      document.getElementById('modalAddCart').textContent = isAdded ? '✓ Added to Cart' : 'Add to Cart';
+      draw();
+      renderCart();
+    }
+
+    function modalBuyAction() {
+      if (!activeProductId) return;
+      const pid = activeProductId;
+      closeModal();
+      openDirectBuy(pid);
+    }
+
+    const modalCloseBtn = document.getElementById('modalClose');
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+
+    const modalOverlay = document.getElementById('productModal');
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', e => {
+        if (e.target === modalOverlay) closeModal();
+      });
+    }
+
+    // ── CART DRAWER MODAL (Multiple Products via WhatsApp) ──
+    function openCart() {
+      renderCart();
+      const saved = getSavedCustomer();
+      const nameInput = document.getElementById('cartCustomerName');
+      const addrInput = document.getElementById('cartCustomerAddress');
+      if (nameInput && !nameInput.value) nameInput.value = saved.name || '';
+      if (addrInput && !addrInput.value) addrInput.value = saved.address || '';
+
+      const drawer = document.getElementById('cartModal');
+      if (drawer) drawer.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCart() {
+      const drawer = document.getElementById('cartModal');
+      if (drawer) drawer.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function renderCart() {
+      const cart = getCart();
+      const listEl = document.getElementById('cartItemsList');
+      const totalDisplay = document.getElementById('cartTotalDisplay');
+      const footerEl = document.getElementById('cartFooter');
+      updateCartBadges();
+
+      if (!listEl) return;
+
+      if (cart.length === 0) {
+        listEl.innerHTML = `
+      <div style="text-align:center;padding:48px 16px;color:var(--lichen);">
+        <div style="font-size:42px;margin-bottom:12px;opacity:.7;">🛒</div>
+        <p style="font:400 20px var(--serif);color:var(--cream);margin-bottom:8px;">Your cart is empty</p>
+        <p style="font-size:14px;margin-bottom:20px;">Explore the handcrafted collection to add pieces.</p>
+        <button class="btn ghost sm" onclick="closeCart();window.location.hash='#shop';">Browse Collection</button>
+      </div>
+    `;
+        if (footerEl) footerEl.style.display = 'none';
+        return;
+      }
+
+      if (footerEl) footerEl.style.display = 'block';
+
+      let grandTotal = 0;
+      listEl.innerHTML = cart.map(item => {
+        const qty = item.qty || 1;
+        const price = parseFloat(item.price) || 0;
+        const itemTotal = price * qty;
+        grandTotal += itemTotal;
+
+        const thumb = item.image
+          ? `<img src="${item.image}" alt="${item.name}">`
+          : `<svg width="24" height="24" viewBox="0 0 24 24" fill="${item.color || '#CCA975'}" opacity=".8"><rect x="3" y="10" width="18" height="11" rx="2"/><path d="M5 10V7a7 7 0 0114 0v3" fill="none" stroke="${item.color || '#CCA975'}" stroke-width="1.5"/></svg>`;
+
+        return `
+      <div class="cart-item">
+        <div class="cart-item-img">${thumb}</div>
+        <div class="cart-item-info">
+          <div class="cart-item-code">${item.code || 'VL-PROD'}</div>
+          <div class="cart-item-name" title="${item.name}">${item.name}</div>
+          <div class="cart-item-price">₹${price.toLocaleString('en-IN')}</div>
+          <div class="cart-qty-ctrl">
+            <button class="cart-qty-btn" onclick="cartQtyMinus('${item.id}')" aria-label="Decrease quantity">−</button>
+            <span class="cart-qty-val">${qty}</span>
+            <button class="cart-qty-btn" onclick="cartQtyPlus('${item.id}')" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+        <button class="cart-item-remove" onclick="cartRemove('${item.id}')" aria-label="Remove item" title="Remove">✕</button>
+      </div>
+    `;
+      }).join('');
+
+      if (totalDisplay) {
+        totalDisplay.textContent = '₹' + grandTotal.toLocaleString('en-IN');
+      }
+    }
+
+    function checkoutCartWhatsApp() {
+      const cart = getCart();
+      if (cart.length === 0) {
+        alert('Your cart is empty.');
+        return;
+      }
+
+      const nameInput = document.getElementById('cartCustomerName');
+      const addrInput = document.getElementById('cartCustomerAddress');
+      const customerName = (nameInput ? nameInput.value : '').trim();
+      const address = (addrInput ? addrInput.value : '').trim();
+
+      if (!customerName) {
+        alert('Please enter your Customer Name.');
+        if (nameInput) nameInput.focus();
+        return;
+      }
+      if (!address) {
+        alert('Please enter your Delivery Address.');
+        if (addrInput) addrInput.focus();
+        return;
+      }
+
+      saveCustomer(customerName, address);
+
+      let grandTotal = 0;
+      let totalCount = 0;
+      const itemsText = cart.map((item, idx) => {
+        const qty = item.qty || 1;
+        const price = parseFloat(item.price) || 0;
+        const itemTotal = price * qty;
+        grandTotal += itemTotal;
+        totalCount += qty;
+        return `${idx + 1}. *${item.name}*\n   • Product Code: ${item.code || 'N/A'}${item.hsn ? `\n   • HSN Code: ${item.hsn}` : ''}\n   • Quantity: ${qty}\n   • Unit Price: ₹${price.toLocaleString('en-IN')}\n   • Subtotal: ₹${itemTotal.toLocaleString('en-IN')}`;
+      }).join('\n\n');
+
+      const message = [
+        `🌿 *NEW ORDER FROM VANYA LIVING* 🌿`,
+        ``,
+        `*Customer Details:*`,
+        `• Customer Name: ${customerName}`,
+        `• Delivery Address: ${address}`,
+        ``,
+        `*Cart Items:*`,
+        itemsText,
+        ``,
+        `*Total Items:* ${totalCount}`,
+        `*Grand Total:* ₹${grandTotal.toLocaleString('en-IN')}`,
+        ``,
+        `Please confirm the order, availability, and dispatch timeline. Thank you!`
+      ].join('\n');
+
+      const waUrl = `https://wa.me/${WA_PHONE}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, '_blank');
+
+      // AUTOMATICALLY CLEAR CART ONCE USER CLICKS TO ORDER
+      saveCart([]);
+      updateCartBadges();
+      closeCart();
+      draw();
+      alert('Order sent to WhatsApp!\n\nYour cart has been cleared.');
+    }
+
+    // Cart Drawer open/close bindings
+    const openCartBtn = document.getElementById('openCartBtn');
+    if (openCartBtn) openCartBtn.addEventListener('click', openCart);
+
+
+
+    const cartCloseBtn = document.getElementById('cartCloseBtn');
+    if (cartCloseBtn) cartCloseBtn.addEventListener('click', closeCart);
+
+    const cartModalOverlay = document.getElementById('cartModal');
+    if (cartModalOverlay) {
+      cartModalOverlay.addEventListener('click', e => {
+        if (e.target === cartModalOverlay) closeCart();
+      });
+    }
+
+    // ── DIRECT BUY NOW MODAL (Single Particular Product via WhatsApp) ──
+    let directBuyProduct = null;
+
+    function openDirectBuy(pid) {
+      const all = getProducts();
+      const p = all.find(x => String(x.id) === String(pid));
+      if (!p) return;
+      directBuyProduct = p;
+
+        const code = getProductCode(p);
+        const has3d = p.model3d || ((p.code && p.code.toUpperCase() === 'YASH1') || (p.name && p.name.toUpperCase().includes('YASH1'))) || (p.images && p.images.some(x => is3dItem(x)));
+      const priceVal = parseFloat(p.price) || 0;
+      const thumb = p.image
+        ? `<img src="${p.image}" alt="${p.name}">`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--deep);color:${p.color || '#CCA975'};font-size:24px;">🪑</div>`;
+
+      const summaryEl = document.getElementById('directProdSummary');
+      if (summaryEl) {
+        summaryEl.innerHTML = `
+      <div class="direct-prod-thumb">${thumb}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--caramel);">CODE: ${code}</div>
+        <div style="font:400 17px var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+        <div style="font:14px var(--sans);color:var(--lichen);">${p.material || p.category || ''} • <strong style="color:var(--cream);">₹${priceVal.toLocaleString('en-IN')}</strong></div>
+      </div>
+    `;
+      }
+
+      const saved = getSavedCustomer();
+      const nameInput = document.getElementById('buyCustomerName');
+      const addrInput = document.getElementById('buyCustomerAddress');
+      if (nameInput) nameInput.value = saved.name || '';
+      if (addrInput) addrInput.value = saved.address || '';
+
+      const buyModal = document.getElementById('buyNowModal');
+      if (buyModal) buyModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDirectBuy() {
+      const buyModal = document.getElementById('buyNowModal');
+      if (buyModal) buyModal.classList.remove('open');
+      document.body.style.overflow = '';
+      directBuyProduct = null;
+    }
+
+    function submitDirectBuyWhatsApp() {
+      if (!directBuyProduct) return;
+      const p = directBuyProduct;
+
+      const nameInput = document.getElementById('buyCustomerName');
+      const addrInput = document.getElementById('buyCustomerAddress');
+      const customerName = (nameInput ? nameInput.value : '').trim();
+      const address = (addrInput ? addrInput.value : '').trim();
+
+      if (!customerName) {
+        alert('Please enter your Customer Name.');
+        if (nameInput) nameInput.focus();
+        return;
+      }
+      if (!address) {
+        alert('Please enter your Delivery Address.');
+        if (addrInput) addrInput.focus();
+        return;
+      }
+
+      saveCustomer(customerName, address);
+
+        const code = getProductCode(p);
+        const has3d = p.model3d || ((p.code && p.code.toUpperCase() === 'YASH1') || (p.name && p.name.toUpperCase().includes('YASH1'))) || (p.images && p.images.some(x => is3dItem(x)));
+      const priceVal = parseFloat(p.price) || 0;
+
+      const message = [
+        `🌿 *DIRECT ORDER — VANYA LIVING* 🌿`,
+        ``,
+        `*Customer Details:*`,
+        `• Customer Name: ${customerName}`,
+        `• Delivery Address: ${address}`,
+        ``,
+        `*Product Ordered:*`,
+        `• Product Name: ${p.name}`,
+        `• Product Code: ${code}`,
+        p.hsn ? `• HSN Code: ${p.hsn}` : '',
+        `• Price: ₹${priceVal.toLocaleString('en-IN')}`,
+        `• Material: ${p.material || 'Reclaimed Handcrafted Wood'}`,
+        p.dimensions ? `• Dimensions: ${p.dimensions}` : '',
+        ``,
+        `Please confirm order availability and dispatch schedule. Thank you!`
+      ].filter(Boolean).join('\n');
+
+      const waUrl = `https://wa.me/${WA_PHONE}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, '_blank');
+
+      // AUTOMATICALLY CLEAR CART ONCE USER CLICKS TO ORDER
+      saveCart([]);
+      updateCartBadges();
+      closeDirectBuy();
+      draw();
+      alert('Order sent to WhatsApp!\n\nYour cart has been cleared.');
+    }
+
+    const buyCloseBtn = document.getElementById('buyCloseBtn');
+    if (buyCloseBtn) buyCloseBtn.addEventListener('click', closeDirectBuy);
+
+    const buyNowOverlay = document.getElementById('buyNowModal');
+    if (buyNowOverlay) {
+      buyNowOverlay.addEventListener('click', e => {
+        if (e.target === buyNowOverlay) closeDirectBuy();
+      });
+    }
+
+    // Global escape key handler
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeCart();
+        closeDirectBuy();
+      }
+    });
+
+    // Storage sync across tabs
+    window.addEventListener('storage', e => {
+      if (e.key === STORE_KEY || e.key === CART_KEY) {
+        draw();
+        updateCartBadges();
+      }
+    });
+    window.addEventListener('focus', () => {
+      draw();
+      updateCartBadges();
+    });
+
+    // Initial load
+    draw();
+    updateCartBadges();
+
+    if (window.vanyaDB) {
+      window.vanyaDB.getProducts().then(prods => {
+        if (prods && prods.length > 0) {
+          draw();
+        }
+      });
+      window.vanyaDB.subscribe(() => {
+        draw();
+      });
+    }
+
+    // ── Reach Us form handler ──
+    function handleReach(e, type) {
+      e.preventDefault();
+      const form = e.target;
+      const inputs = form.querySelectorAll('input, textarea');
+      const to = 'vanya.living.care@gmail.com';
+
+      if (type === 'design') {
+        const name    = inputs[0].value.trim();
+        const email   = inputs[1].value.trim();
+        const idea    = inputs[2].value.trim();
+        const subject = encodeURIComponent(`Design Submission — ${name}`);
+        const body    = encodeURIComponent(
+          `Name: ${name}\nEmail: ${email}\n\nDesign Idea:\n${idea}`
+        );
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+      } else {
+        const name    = inputs[0].value.trim();
+        const email   = inputs[1].value.trim();
+        const phone   = inputs[2].value.trim();
+        const details = inputs[3].value.trim();
+        const subject = encodeURIComponent(`Vendor Application — ${name}`);
+        const body    = encodeURIComponent(
+          `Name / Business: ${name}\nEmail: ${email}\nPhone: ${phone}\n\nDetails:\n${details}`
+        );
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+      }
+
+      const okEl = document.getElementById('ok-' + type);
+      if (okEl) okEl.textContent = '✓ Opening your email client…';
+      form.reset();
+    }
+
+    // ── Ticker & Form Hooks ──
+    const msgs = ['Free delivery over ₹50,000', 'Every piece checked closely', '25-year repair promise', 'Reclaimed wood, no old-growth'];
+    const tk = document.getElementById('tk');
+    if (tk) tk.innerHTML = [...msgs, ...msgs, ...msgs, ...msgs].map(m => `<span>${m}</span>`).join('');
+
+    const f = document.getElementById('f');
+    if (f) {
+      f.addEventListener('submit', e => {
+        e.preventDefault();
+        const ok = document.getElementById('ok');
+        if (ok) ok.textContent = "You're in. Check your inbox for your code and seedling details.";
+        e.target.reset();
+      });
+    }
+
+    // ── Features Carousel — seamless infinite marquee ──
+    (function() {
+      const track = document.getElementById('featTrack');
+      if (!track) return;
+
+      // Clone all cards and append (makes a seamless double-length strip)
+      const origCards = Array.from(track.children);
+      origCards.forEach(card => track.appendChild(card.cloneNode(true)));
+
+      // Measure total width of ONE set (original 8 cards + gaps)
+      function getTotalWidth() {
+        const gap = 24;
+        return origCards.reduce((sum, c) => sum + c.offsetWidth + gap, 0);
+      }
+
+      let offset = 0;        // current px offset
+      let speed = 0.6;       // px per frame (auto-roll speed)
+      let paused = false;
+      let rafId = null;
+      let shiftOffset = 0;   // extra offset from arrow clicks
+
+      function animate() {
+        if (!paused) {
+          offset += speed;
+          const total = getTotalWidth();
+          if (offset >= total) offset -= total;  // seamless reset
+        }
+        track.style.transform = `translateX(${-(offset + shiftOffset)}px)`;
+        rafId = requestAnimationFrame(animate);
+      }
+
+      // Pause on hover
+      track.addEventListener('mouseenter', () => { paused = true; });
+      track.addEventListener('mouseleave', () => { paused = false; });
+
+      // Arrow navigation — shift by one card width
+      window.featShift = function(dir) {
+        const cardW = origCards[0].offsetWidth + 24;
+        offset += dir * cardW;
+        const total = getTotalWidth();
+        if (offset < 0) offset += total;
+        if (offset >= total) offset -= total;
+      };
+
+      animate();
+    })();
+  </script>
+
+
+
+</body>
+
+</html>
