@@ -771,30 +771,31 @@
     .modal-box {
       background: var(--card-bg);
       border-radius: 24px;
-      width: 70vw;
-      max-width: 70vw;
+      width: 92vw;
+      max-width: 480px;
       max-height: 90vh;
       overflow-y: auto;
       border: 1px solid rgba(204, 169, 117, .2);
       box-shadow: 0 24px 64px rgba(0, 0, 0, .55);
       transform: translateY(22px);
-      transition: transform .3s
+      transition: transform .3s;
+      position: relative;
     }
 
     .modal-overlay.open .modal-box {
-      transform: translateY(0)
+      transform: translateY(0);
     }
 
     .modal-head {
       position: relative;
-      padding: 22px 22px 0
+      padding: 22px 22px 0;
     }
 
     .modal-close {
       position: absolute;
       top: 16px;
       right: 16px;
-      background: rgba(255, 253, 240, .08);
+      background: rgba(255, 253, 240, .1);
       border: none;
       color: var(--cream);
       width: 36px;
@@ -807,17 +808,17 @@
       font-size: 20px;
       line-height: 1;
       transition: background .15s;
-      z-index: 2
+      z-index: 10;
     }
 
     .modal-close:hover {
-      background: rgba(255, 253, 240, .16)
+      background: rgba(255, 253, 240, .2);
     }
 
-    .modal-img {
+    .modal-img-container {
+      position: relative;
       width: 100%;
       aspect-ratio: 1 / 1;
-      max-height: 420px;
       overflow: hidden;
       border-radius: 14px;
       background: var(--deep);
@@ -826,13 +827,65 @@
       justify-content: center;
     }
 
-    .modal-img svg {
+    .modal-img {
       width: 100%;
-      height: 100%
+      height: 100%;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-img img,
+    .modal-img iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .modal-body {
-      padding: 20px 24px 28px
+      padding: 20px 24px 28px;
+    }
+
+    /* ── Desktop Product Modal: Square image left, all data right ── */
+    @media (min-width: 769px) {
+      .modal-box {
+        width: 860px;
+        max-width: 90vw;
+        max-height: 85vh;
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        overflow: hidden;
+      }
+
+      .modal-head {
+        padding: 28px 16px 28px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow-y: auto;
+      }
+
+      .modal-img-container {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        height: auto;
+        border-radius: 14px;
+      }
+
+      .modal-body {
+        padding: 32px 36px 32px 20px;
+        overflow-y: auto;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .modal-close {
+        top: 18px;
+        right: 18px;
+      }
     }
 
     .modal-tag {
@@ -1503,9 +1556,9 @@
   <!-- ── Product Modal ── -->
   <div class="modal-overlay" id="productModal" role="dialog" aria-modal="true" aria-label="Product details">
     <div class="modal-box">
+      <button class="modal-close" id="modalClose" aria-label="Close">&#x2715;</button>
       <div class="modal-head">
-        <button class="modal-close" id="modalClose" aria-label="Close">&#x2715;</button>
-        <div class="modal-img-container" style="position:relative; width:100%; aspect-ratio:1/1; max-height:420px; overflow:hidden; border-radius:14px; background:var(--deep); display:flex; align-items:center; justify-content:center;">
+        <div class="modal-img-container">
           <div class="modal-img" id="modalImg" style="width:100%; height:100%;"></div>
           <!-- Multiple images navigation controls -->
           <button class="modal-nav-btn prev" id="modalImgPrev" onclick="navigateModalImage(-1)" aria-label="Previous image" style="display:none; position:absolute; left:12px; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,0.65); color:#fff; border:1px solid rgba(255,253,240,0.3); font-size:18px; cursor:pointer; align-items:center; justify-content:center; z-index:5;">❮</button>
