@@ -4,13 +4,13 @@
  */
 
 window.VANYA_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDyKkgp1qCoB1S8dGGZ1KYXaqk4GVFqSdw",
-  authDomain: "vanyaven-4984f.firebaseapp.com",
-  projectId: "vanyaven-4984f",
-  storageBucket: "vanyaven-4984f.firebasestorage.app",
-  messagingSenderId: "856712244664",
-  appId: "1:856712244664:web:9e8bb333a0e047501ef34d",
-  measurementId: "G-XPG1RFTWP7"
+  apiKey: "AIzaSyAUZ3wdYhGCGHC-At2HQ7_RtWnskzz617g",
+  authDomain: "vanyaliving-8a633.firebaseapp.com",
+  projectId: "vanyaliving-8a633",
+  storageBucket: "vanyaliving-8a633.firebasestorage.app",
+  messagingSenderId: "912019339731",
+  appId: "1:912019339731:web:e5246e946d4c86a1159726",
+  measurementId: "G-34980T8HVM"
 };
 
 (function () {
