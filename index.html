@@ -584,73 +584,93 @@
     /* â”€â”€ Newsletter â”€â”€ */
     .join {
       text-align: center;
-      max-width: 960px
+      max-width: 720px;
+      padding-top: clamp(24px, 4vw, 44px);
+      padding-bottom: clamp(24px, 4vw, 44px);
+    }
+
+    .join h2 {
+      font-size: clamp(22px, 3.5vw, 34px);
+      margin-bottom: 6px;
+    }
+
+    .join .sub {
+      font-size: 12.5px;
+      margin-bottom: 18px;
     }
 
     .reach-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 32px;
-      margin-top: 40px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
       text-align: left;
     }
 
     .reach-card {
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(194,97,63,0.25);
-      border-radius: 20px;
-      padding: 32px 28px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(194, 97, 63, 0.22);
+      border-radius: 12px;
+      padding: 16px 16px;
     }
 
     .reach-icon {
-      font-size: 32px;
-      margin-bottom: 12px;
+      font-size: 18px;
+      margin-bottom: 6px;
     }
 
     .reach-card h3 {
-      font: 400 22px var(--serif);
+      font: 400 15px var(--serif);
       color: var(--cream);
-      margin: 0 0 8px;
+      margin: 0 0 4px;
     }
 
     .reach-card > p {
-      font: 400 13px/1.7 var(--sans);
+      font: 400 11px/1.45 var(--sans);
       color: var(--lichen);
-      margin: 0 0 20px;
+      margin: 0 0 10px;
     }
 
     .reach-card form {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 6px;
     }
 
     .reach-card input,
     .reach-card textarea {
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(204,169,117,.35);
-      background: rgba(107,111,78,0.25);
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(204, 169, 117, .28);
+      background: rgba(107, 111, 78, 0.2);
       color: var(--cream);
-      font: 14px var(--sans);
+      font: 11.5px var(--sans);
       resize: vertical;
+    }
+
+    .reach-card textarea {
+      min-height: 44px;
     }
 
     .reach-card input::placeholder,
     .reach-card textarea::placeholder {
       color: var(--lichen);
+      font-size: 11px;
     }
 
     .reach-card .btn {
       align-self: flex-start;
-      margin-top: 4px;
+      margin-top: 2px;
+      padding: 7px 16px;
+      font-size: 11.5px;
+      border-radius: 50px;
     }
 
     .reach-ok {
-      margin-top: 10px;
-      font-size: 13px;
+      margin-top: 6px;
+      font-size: 11px;
       color: var(--caramel);
-      min-height: 1.4em;
+      min-height: 1.2em;
       font-family: var(--sans);
     }
 
@@ -1390,7 +1410,7 @@
         <form onsubmit="handleReach(event,'design')">
           <input type="text" required placeholder="Your Name" aria-label="Name">
           <input type="email" required placeholder="your@email.com" aria-label="Email">
-          <textarea rows="3" placeholder="Describe your design idea…" aria-label="Design idea"></textarea>
+          <textarea rows="2" placeholder="Describe your design idea…" aria-label="Design idea"></textarea>
           <button class="btn" type="submit">Submit Design</button>
         </form>
         <div class="ok reach-ok" id="ok-design" role="status"></div>
@@ -1405,7 +1425,7 @@
           <input type="text" required placeholder="Your Name / Business" aria-label="Name or Business">
           <input type="email" required placeholder="your@email.com" aria-label="Email">
           <input type="tel" placeholder="Phone Number" aria-label="Phone">
-          <textarea rows="3" placeholder="Tell us about your products or services…" aria-label="Vendor details"></textarea>
+          <textarea rows="2" placeholder="Tell us about your products or services…" aria-label="Vendor details"></textarea>
           <button class="btn" type="submit">Apply as Vendor</button>
         </form>
         <div class="ok reach-ok" id="ok-vendor" role="status"></div>
