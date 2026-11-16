@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1331,7 +1331,6 @@
         </button>
       </div>
     </nav>
-    <button class="snd" id="snd" type="button" aria-pressed="false">Turn sound on</button>
     <div class="hero-in">
       <h1>Furniture that remembers the forest.</h1>
       <p class="lead">Every piece is made from reclaimed or certified wood, and for every one we ship, we check product
@@ -1603,16 +1602,8 @@
     const CART_KEY = 'vl_cart';
     const CUSTOMER_KEY = 'vl_customer_info';
 
-    // ---- Hero Sound ----
-    const hv = document.getElementById('hv'), sb = document.getElementById('snd');
-    if (sb && hv) {
-      sb.addEventListener('click', () => {
-        hv.muted = !hv.muted;
-        if (!hv.muted) { hv.volume = .7; hv.play().catch(() => { }); }
-        sb.setAttribute('aria-pressed', String(!hv.muted));
-        sb.textContent = hv.muted ? 'Turn sound on' : 'Sound on · tap to mute';
-      });
-    }
+    // ---- Hero Video ----
+    const hv = document.getElementById('hv');
 
     // ---- Storage Helpers ----
     function getProducts() {
