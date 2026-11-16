@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -336,11 +336,40 @@
       border-color: var(--caramel)
     }
 
-    /* â”€â”€ Product grid â”€â”€ */
+    /* ── Product grid ── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-      gap: 22px
+      grid-template-columns: repeat(5, 1fr);
+      gap: 18px
+    }
+
+    @media(max-width: 900px) {
+      .grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    }
+    @media(max-width: 600px) {
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+
+    /* ── More Products button ── */
+    .more-products-wrap {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 24px 0 8px;
+    }
+    .more-products-btn {
+      background: transparent;
+      border: 1.5px solid var(--caramel);
+      color: var(--caramel);
+      padding: 12px 32px;
+      border-radius: 999px;
+      font: 600 14px var(--sans);
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background .2s, color .2s;
+    }
+    .more-products-btn:hover {
+      background: var(--caramel);
+      color: var(--ink);
     }
 
     .card {
@@ -1792,14 +1821,16 @@
         return;
       }
 
-      gridEl.innerHTML = filtered.map((p, i) => {
-        const isAdded = cartHas(p.id);
-        const priceVal = parseFloat(p.price) || 0;
-        const priceStr = priceVal ? ('₹' + priceVal.toLocaleString('en-IN')) : '';
-        const code = getProductCode(p);
-        const has3d = p.model3d || ((p.code && p.code.toUpperCase() === 'YASH1') || (p.name && p.name.toUpperCase().includes('YASH1'))) || (p.images && p.images.some(x => is3dItem(x)));
+      const PAGE_SIZE = 10;
 
-        return `
+      function renderCards(count) {
+        const visible = filtered.slice(0, count);
+        const cards = visible.map((p, i) => {
+          const isAdded = cartHas(p.id);
+          const priceVal = parseFloat(p.price) || 0;
+          const priceStr = priceVal ? ('₹' + priceVal.toLocaleString('en-IN')) : '';
+          const code = getProductCode(p);
+          return `
       <article class="card card-wrap" tabindex="0" role="button" aria-label="View ${p.name}" data-pid="${p.id}">
         <div class="card-visual-click" onclick="openModal('${p.id}')" style="position:relative; cursor:pointer;">
           ${renderProductVisual(p, i)}
@@ -1822,9 +1853,27 @@
             </button>
           </div>
         </div>
-      </article>
-    `;
-      }).join('');
+      </article>`;
+        }).join('');
+
+        const moreBtn = count < filtered.length ? `
+        <div class="more-products-wrap">
+          <button class="more-products-btn" id="moreProdBtn">
+            More Products (${filtered.length - count} remaining)
+          </button>
+        </div>` : '';
+
+        gridEl.innerHTML = cards + moreBtn;
+
+        const btn = document.getElementById('moreProdBtn');
+        if (btn) {
+          btn.addEventListener('click', () => {
+            renderCards(filtered.length);
+          });
+        }
+      }
+
+      renderCards(PAGE_SIZE);
     }
 
     // ---- Event Listeners for Grid & Actions ----
