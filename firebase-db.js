@@ -1,42 +1,43 @@
 /**
- * Vanya Living - Unified Firestore & LocalStorage Data Layer
- * Handles real-time cloud sync with automatic offline fallback.
+ * Vanya Living - Unified Cloud Firestore Data Layer
+ * Connected Project: vanyaven-4984f
  */
 
 window.VANYA_FIREBASE_CONFIG = {
-  // Replace these with your Firebase project credentials from console.firebase.google.com
-  apiKey: "YOUR_API_KEY",
-  authDomain: "vanya-living.firebaseapp.com",
-  projectId: "vanya-living",
-  storageBucket: "vanya-living.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDyKkgp1qCoB1S8dGGZ1KYXaqk4GVFqSdw",
+  authDomain: "vanyaven-4984f.firebaseapp.com",
+  projectId: "vanyaven-4984f",
+  storageBucket: "vanyaven-4984f.firebasestorage.app",
+  messagingSenderId: "856712244664",
+  appId: "1:856712244664:web:9e8bb333a0e047501ef34d",
+  measurementId: "G-XPG1RFTWP7"
 };
 
-(function() {
+(function () {
+  'use strict';
+
   const STORE_KEY = 'vl_products';
   let db = null;
   let isFirestoreReady = false;
 
   function initFirebase() {
     try {
-      if (typeof firebase !== 'undefined' && window.VANYA_FIREBASE_CONFIG && window.VANYA_FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY') {
+      if (typeof firebase !== 'undefined' && window.VANYA_FIREBASE_CONFIG && window.VANYA_FIREBASE_CONFIG.apiKey) {
         if (!firebase.apps.length) {
           firebase.initializeApp(window.VANYA_FIREBASE_CONFIG);
         }
         db = firebase.firestore();
         isFirestoreReady = true;
-        console.log('[VanyaDB] Cloud Firestore connected successfully.');
+        console.log('[VanyaDB] Cloud Firestore connected successfully to project:', window.VANYA_FIREBASE_CONFIG.projectId);
       } else {
-        console.log('[VanyaDB] Running in LocalStorage mode (Cloud keys pending or offline).');
+        console.warn('[VanyaDB] Firebase SDK not loaded, operating in offline fallback mode.');
       }
     } catch (err) {
-      console.warn('[VanyaDB] Firestore init fallback to LocalStorage:', err);
+      console.error('[VanyaDB] Firestore init error:', err);
       isFirestoreReady = false;
     }
   }
 
-  // Fallback LocalStorage functions
   function getLocalProducts() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
@@ -49,63 +50,58 @@ window.VANYA_FIREBASE_CONFIG = {
   function saveLocalProducts(products) {
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(products));
+      window.vl_products = products;
     } catch (e) {
-      console.error('[VanyaDB] LocalStorage save failed:', e);
+      console.warn('[VanyaDB] LocalStorage save warning:', e);
     }
   }
+
+  // Pre-populate in-memory cache
+  window.vl_products = getLocalProducts();
 
   const vanyaDB = {
     isReady: () => isFirestoreReady,
 
-    // Fetch all products (from Firestore if connected, else LocalStorage)
+    // Fetch all products directly from Cloud Firestore
     async getProducts() {
+      if (!isFirestoreReady) initFirebase();
       if (isFirestoreReady && db) {
         try {
           const snapshot = await db.collection('products').get();
-          if (!snapshot.empty) {
-            const list = [];
-            snapshot.forEach(doc => {
-              const data = doc.data();
-              data.id = doc.id;
-              list.push(data);
-            });
-            // Keep local storage warm as offline cache
+          const list = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            data.id = doc.id;
+            list.push(data);
+          });
+          if (list.length > 0) {
             saveLocalProducts(list);
             return list;
           }
         } catch (e) {
-          console.warn('[VanyaDB] Error fetching from Firestore, falling back to local cache:', e);
+          console.error('[VanyaDB] Firestore fetch error:', e);
         }
       }
       return getLocalProducts();
     },
 
-    // Save entire array (e.g., sample seeder or batch import)
-    async setProducts(arr) {
-      saveLocalProducts(arr);
-      if (isFirestoreReady && db) {
-        try {
-          const batch = db.batch();
-          arr.forEach(p => {
-            const id = String(p.id || Date.now());
-            p.id = id;
-            batch.set(db.collection('products').doc(id), p);
-          });
-          await batch.commit();
-          console.log('[VanyaDB] Batch products synced to Firestore.');
-        } catch (e) {
-          console.error('[VanyaDB] Firestore batch error:', e);
-        }
-      }
-      return true;
-    },
-
-    // Save or update a product
+    // Save a product document to Cloud Firestore
     async saveProduct(prod) {
-      const id = String(prod.id || Date.now());
+      const id = String(prod.id || ('VL-' + Date.now()));
       prod.id = id;
 
-      // 1. Update local cache immediately
+      // 1. Save to Cloud Firestore
+      if (!isFirestoreReady) initFirebase();
+      if (isFirestoreReady && db) {
+        try {
+          await db.collection('products').doc(id).set(prod, { merge: true });
+          console.log('[VanyaDB] Successfully saved product to Firestore:', id);
+        } catch (e) {
+          console.error('[VanyaDB] Firestore save error:', e);
+        }
+      }
+
+      // 2. Update local storage & memory
       let local = getLocalProducts();
       const existingIdx = local.findIndex(p => String(p.id) === id);
       if (existingIdx >= 0) {
@@ -114,39 +110,50 @@ window.VANYA_FIREBASE_CONFIG = {
         local.unshift(prod);
       }
       saveLocalProducts(local);
-
-      // 2. Sync to Cloud Firestore if connected
-      if (isFirestoreReady && db) {
-        try {
-          await db.collection('products').doc(id).set(prod);
-          console.log('[VanyaDB] Product synced to Firestore:', id);
-        } catch (e) {
-          console.error('[VanyaDB] Firestore save error:', e);
-        }
-      }
       return prod;
     },
 
-    // Delete a product
+    // Batch save products (e.g. sample seeder or multiple items)
+    async setProducts(arr) {
+      saveLocalProducts(arr);
+      if (!isFirestoreReady) initFirebase();
+      if (isFirestoreReady && db) {
+        try {
+          const batch = db.batch();
+          arr.forEach(p => {
+            const id = String(p.id || Date.now());
+            p.id = id;
+            batch.set(db.collection('products').doc(id), p, { merge: true });
+          });
+          await batch.commit();
+          console.log('[VanyaDB] All products batch-synced to Cloud Firestore.');
+        } catch (e) {
+          console.error('[VanyaDB] Firestore batch sync error:', e);
+        }
+      }
+      return true;
+    },
+
+    // Delete a product from Cloud Firestore
     async deleteProduct(id) {
       id = String(id);
-      // 1. Update local cache immediately
-      let local = getLocalProducts().filter(p => String(p.id) !== id);
-      saveLocalProducts(local);
-
-      // 2. Delete from Cloud Firestore if connected
+      if (!isFirestoreReady) initFirebase();
       if (isFirestoreReady && db) {
         try {
           await db.collection('products').doc(id).delete();
-          console.log('[VanyaDB] Product deleted from Firestore:', id);
+          console.log('[VanyaDB] Deleted product from Firestore:', id);
         } catch (e) {
           console.error('[VanyaDB] Firestore delete error:', e);
         }
       }
+
+      let local = getLocalProducts().filter(p => String(p.id) !== id);
+      saveLocalProducts(local);
     },
 
-    // Real-time listener for updates across tabs & customers
+    // Real-time synchronization subscription
     subscribe(onChange) {
+      if (!isFirestoreReady) initFirebase();
       if (isFirestoreReady && db) {
         return db.collection('products').onSnapshot(snapshot => {
           const list = [];
@@ -157,7 +164,7 @@ window.VANYA_FIREBASE_CONFIG = {
           });
           if (list.length > 0) {
             saveLocalProducts(list);
-            onChange(list);
+            if (typeof onChange === 'function') onChange(list);
           }
         }, err => {
           console.warn('[VanyaDB] Snapshot error:', err);
