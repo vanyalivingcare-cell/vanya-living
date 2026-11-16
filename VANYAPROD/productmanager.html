@@ -718,17 +718,20 @@
                 added yet. Upload files above or add a link below.</span>
             </div>
 
-            <!-- Link File Last: Supports Image URLs and 3D Viewer HTML files -->
+            <!-- Link File & 3D HTML View Upload -->
             <div style="display:flex; flex-direction:column; gap:8px;">
               <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <input type="text" id="f-image-url" placeholder="Enter Image URL or 3D Viewer HTML file (e.g. assets/sample-3d.html, chair-3d.html)" style="flex:1; min-width:260px;"
+                <input type="text" id="f-image-url" placeholder="Enter image URL or link to 3D HTML file" style="flex:1; min-width:220px;"
                   onkeydown="if(event.key==='Enter'){event.preventDefault();addImageFromUrl();}">
                 <button type="button" class="btn sm" onclick="addImageFromUrl(false)" title="Add as standard photo or auto-detect 3D">Add Link</button>
-                <button type="button" class="btn sm" onclick="addImageFromUrl(true)" style="background:rgba(204,169,117,0.22); border:1px solid var(--caramel); color:var(--cream); display:inline-flex; align-items:center; gap:5px;" title="Add as 3D Viewer (rendered as the last slide in modal)">
+                
+                <!-- 3D HTML File Upload from Device -->
+                <input type="file" id="f-3d-file" accept=".html,.htm" style="display:none;" onchange="handle3DFileUpload(event)">
+                <button type="button" class="btn sm" id="btn3dUpload" onclick="document.getElementById('f-3d-file').click()" style="background:rgba(204,169,117,0.25); border:1.5px solid var(--caramel); color:var(--cream); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Choose an interactive 3D HTML file from your device">
                   <span>🧊 Add 3D HTML View</span>
                 </button>
               </div>
-              <span style="font-size:11px; color:var(--lichen); opacity:0.8;">💡 Tip: Any <code>.html</code> file or 3D view link is automatically stored and displayed as the <strong>Last Slide</strong> in the 3D viewer.</span>
+              <span style="font-size:11px; color:var(--lichen); opacity:0.85;">💡 Click <strong>"🧊 Add 3D HTML View"</strong> to choose any 3D <code>.html</code> file from your device. It gets saved directly to the database for this product and renders interactively as the <strong>Last Slide</strong>.</span>
             </div>
           </div>
         </div>
@@ -915,7 +918,7 @@
       if (typeof item === 'object' && item.type === '3d') return true;
       if (typeof item === 'string') {
         const clean = item.split('?')[0].toLowerCase().trim();
-        return clean.endsWith('.html') || clean.endsWith('.htm') || clean.includes('/3d') || clean.includes('model');
+        return clean.endsWith('.html') || clean.endsWith('.htm') || clean.includes('/3d') || clean.includes('model') || clean.startsWith('data:text/html');
       }
       return false;
     }
@@ -945,12 +948,17 @@
         const url = getItemUrl(item);
 
         if (is3d) {
-          const filename = url.split('/').pop().split('\\').pop() || '3D HTML View';
+          let filename = '3D HTML View';
+          if (typeof item === 'object' && item.filename) {
+            filename = item.filename;
+          } else if (!url.startsWith('data:')) {
+            filename = url.split('/').pop().split('\\').pop() || '3D HTML View';
+          }
           return `
             <div style="position:relative; width:92px; height:74px; border-radius:8px; overflow:hidden; border:1.5px solid var(--caramel); background:#1e2014; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px; text-align:center;">
               <span style="font-size:18px;">🧊</span>
               <span style="font-size:9px; font-weight:700; color:var(--caramel); text-transform:uppercase; margin-top:2px;">3D Slide</span>
-              <span style="font-size:8px; color:var(--lichen); max-width:84px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${url}">${filename}</span>
+              <span style="font-size:8px; color:var(--lichen); max-width:84px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${filename}">${filename}</span>
               <span style="position:absolute; bottom:0; left:0; right:0; background:rgba(204,169,117,0.3); color:var(--cream); font-size:8px; font-weight:700; text-align:center; padding:1px 0;">LAST SLIDE</span>
               <button type="button" onclick="removeImageAt(${index})" style="position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.8); color:#fff; border:none; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; line-height:1;" title="Remove 3D view">✕</button>
             </div>
@@ -965,6 +973,53 @@
           </div>
         `;
       }).join('');
+    }
+
+    // ── Handle 3D HTML File Upload from Device ──
+    async function handle3DFileUpload(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const lowerName = file.name.toLowerCase();
+      if (!lowerName.endsWith('.html') && !lowerName.endsWith('.htm')) {
+        toast('⚠ Please choose an .html or .htm 3D viewer file.');
+        e.target.value = '';
+        return;
+      }
+
+      toast(`Loading 3D HTML file "${file.name}"...`);
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        let content = evt.target.result;
+        // Normalize MIME prefix if needed
+        if (content.startsWith('data:')) {
+          if (!content.startsWith('data:text/html')) {
+            content = content.replace(/^data:[^;]*/, 'data:text/html');
+          }
+        }
+
+        // Remove existing 3D items so this uploaded file is the primary 3D viewer
+        currentImages = currentImages.filter(x => !is3dItem(x));
+        currentImages.push({
+          type: '3d',
+          url: content,
+          filename: file.name
+        });
+
+        sortImagesWith3DLast();
+        renderImageGallery();
+        e.target.value = '';
+        toast(`✓ 3D HTML View "${file.name}" attached! Click "Save Product" to upload to database.`);
+      };
+
+      reader.onerror = function (err) {
+        console.error('3D HTML file read error:', err);
+        toast('⚠ Failed to read the file from device.');
+        e.target.value = '';
+      };
+
+      reader.readAsDataURL(file);
     }
 
     async function handleMultipleImageFiles(e) {
@@ -995,7 +1050,6 @@
 
       const is3d = force3d || is3dItem(url);
       if (is3d) {
-        // Remove existing 3D items if any, so there's one primary 3D viewer
         currentImages = currentImages.filter(x => !is3dItem(x));
         currentImages.push({ type: '3d', url: url });
         toast('✓ 3D HTML View added as the Last Slide!');
