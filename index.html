@@ -1557,6 +1557,9 @@
 
     // ---- Storage Helpers ----
     function getProducts() {
+      if (window.vl_products && window.vl_products.length > 0) {
+        return window.vl_products;
+      }
       try {
         const raw = localStorage.getItem(STORE_KEY);
         return raw ? JSON.parse(raw) : [];
@@ -2337,11 +2340,15 @@
     if (window.vanyaDB) {
       window.vanyaDB.getProducts().then(prods => {
         if (prods && prods.length > 0) {
+          window.vl_products = prods;
           draw();
         }
       });
-      window.vanyaDB.subscribe(() => {
-        draw();
+      window.vanyaDB.subscribe((prods) => {
+        if (prods && prods.length > 0) {
+          window.vl_products = prods;
+          draw();
+        }
       });
     }
 
