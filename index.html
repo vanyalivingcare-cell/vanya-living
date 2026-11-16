@@ -390,14 +390,18 @@
     }
 
     .card .b {
-      padding: 18px 20px 22px
+      padding: 12px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
     .card h3 {
-      font: 400 22px var(--serif);
-      margin: 0 0 4px;
+      font: 400 16.5px var(--serif);
+      margin: 0;
       color: var(--cream);
-      letter-spacing: .01em
+      letter-spacing: .01em;
+      line-height: 1.25;
     }
 
     .from {
@@ -414,8 +418,9 @@
     }
 
     .price {
-      font: 600 19px var(--sans);
-      color: var(--caramel)
+      font: 600 14px var(--sans);
+      color: var(--caramel);
+      letter-spacing: 0.2px;
     }
 
     .add {
@@ -1822,27 +1827,15 @@
           const priceStr = priceVal ? ('₹' + priceVal.toLocaleString('en-IN')) : '';
           const code = getProductCode(p);
           return `
-      <article class="card card-wrap" tabindex="0" role="button" aria-label="View ${p.name}" data-pid="${p.id}">
-        <div class="card-visual-click" onclick="openModal('${p.id}')" style="position:relative; cursor:pointer;">
+      <article class="card card-wrap" tabindex="0" role="button" aria-label="View ${p.name}" data-pid="${p.id}" onclick="openModal('${p.id}')">
+        <div class="card-visual-click" style="position:relative; cursor:pointer;">
           ${renderProductVisual(p, i)}
-          ${p.badge ? `<span style="position:absolute; top:10px; right:10px; background:var(--terra,#C2613F); color:#F3E9DC; padding:4px 10px; border-radius:50px; font-size:10px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; z-index:3; box-shadow:0 2px 8px rgba(0,0,0,0.25);">${p.badge}</span>` : ""}
-          ${p.images && p.images.length > 1 ? `<span style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.7); color:var(--cream); padding:3px 8px; border-radius:50px; font-size:11px; font-weight:600; letter-spacing:0.5px;">📷 ${p.images.length}</span>` : ''}
+          ${p.badge ? `<span style="position:absolute; top:8px; right:8px; background:var(--terra,#C2613F); color:#F3E9DC; padding:3px 8px; border-radius:50px; font-size:9px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; z-index:3; box-shadow:0 2px 8px rgba(0,0,0,0.25);">${p.badge}</span>` : ""}
+          ${p.images && p.images.length > 1 ? `<span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.7); color:var(--cream); padding:2px 6px; border-radius:50px; font-size:10px; font-weight:600; letter-spacing:0.4px;">📷 ${p.images.length}</span>` : ''}
         </div>
         <div class="b">
-          <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--caramel);margin-bottom:3px;">CODE: ${code}</div>
-          <h3 onclick="openModal('${p.id}')" style="cursor:pointer;">${p.name}</h3>
-          <p class="from">${p.material || p.category || 'Handcrafted'}</p>
-          <div class="row">
-            <span class="price">${priceStr}</span>
-            <button class="add ${isAdded ? 'on' : ''}" data-pid="${p.id}" type="button">
-              ${isAdded ? 'Added ✓' : 'Add to cart'}
-            </button>
-          </div>
-          <div style="margin-top:10px;display:flex;gap:8px;">
-            <button class="btn direct-buy-btn" data-pid="${p.id}" type="button" style="width:100%;justify-content:center;padding:9px 12px;font-size:13px;border-radius:50px;">
-              <span>Buy Now ⚡</span>
-            </button>
-          </div>
+          <h3>${p.name}</h3>
+          <div class="price">${priceStr}</div>
         </div>
       </article>`;
         }).join('');
