@@ -148,13 +148,22 @@
       filter: brightness(1.5)
     }
 
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: clamp(10px, 2.5vw, 24px);
+      flex-wrap: nowrap;
+      white-space: nowrap;
+    }
+
     nav a.l {
       font-weight: 500;
       font-size: 15px;
       text-decoration: none;
-      margin-left: 22px;
+      margin-left: 0;
       opacity: .9;
-      font-family: var(--sans)
+      font-family: var(--sans);
+      white-space: nowrap;
     }
 
     /* â”€â”€ Hero content â”€â”€ */
@@ -864,15 +873,17 @@
       background: rgba(204, 169, 117, 0.16);
       border: 1.5px solid var(--caramel);
       color: var(--cream);
-      padding: 8px 18px;
+      padding: 7px 15px;
       border-radius: 50px;
-      font: 600 14px var(--sans);
+      font: 600 13px var(--sans);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       transition: all .2s ease;
-      margin-left: 14px;
+      margin-left: 0;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .nav-cart-btn:hover {
@@ -899,6 +910,25 @@
     .nav-cart-btn:hover .cart-badge {
       background: var(--ink);
       color: var(--cream);
+    }
+
+    /* ── Mobile nav: keep everything in one row ── */
+    @media(max-width: 520px) {
+      .nav-actions {
+        gap: 8px;
+      }
+      nav a.l {
+        font-size: 12px;
+      }
+      .nav-cart-btn {
+        padding: 5px 9px;
+        font-size: 11px;
+        gap: 4px;
+      }
+      .nav-cart-btn svg {
+        width: 13px;
+        height: 13px;
+      }
     }
 
     /* Floating Cart Button (always visible on top right when scrolling) */
@@ -1256,7 +1286,7 @@
       <a class="logo" href="#top" aria-label="Vanya Living — home">
         <img src="assets/vanya.logo.png" alt="Vanya Living" class="logo-img">
       </a>
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div class="nav-actions">
         <a class="l" href="#shop">Shop</a>
         <a class="l" href="#why">Our trees</a>
         <a class="l" href="#join">Reach Us</a>
