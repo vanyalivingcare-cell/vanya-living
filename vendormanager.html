@@ -42,8 +42,21 @@ header{display:flex;justify-content:space-between;gap:12px;align-items:center;fl
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="firebase-db.js"></script>
+<!-- Google Identity Services for OAuth -->
+<script src="https://accounts.google.com/gsi/client" async></script>
 </head><body>
-<header><div><h1>📐 CAD Data Portal</h1><p>SolidWorks library (Google Drive) · Vendor PO | Vanya Living</p></div><div class="hr"><span id="rfm" class="mt np"></span><button class="b np" id="add_cad" title="Add custom CAD part or drawing">+ Add Part</button><button class="b p np" id="rf" title="Configure or scan Google Drive folder">⟳ Google Drive</button><div id="who"><span id="sy" style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--ac2);color:var(--ac);border:1px solid rgba(11,95,255,0.25);">Connecting...</span></div></div></header>
+<header><div><h1>📐 CAD Data Portal</h1><p>SolidWorks library (Google Drive) · Vendor PO | Vanya Living</p></div><div class="hr"><span id="rfm" class="mt np"></span><button class="b p np" id="rf" title="Configure or scan Google Drive folder">⟳ Google Drive</button><div id="who">
+  <button id="gsi_btn" class="b" style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;" onclick="triggerGoogleSignIn()">
+    <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Sign in with Google
+  </button>
+  <div id="gsi_user" style="display:none;align-items:center;gap:6px;font-size:12px;">
+    <img id="gsi_avatar" style="width:24px;height:24px;border-radius:50%;" src="" alt="">
+    <span id="gsi_name" style="color:var(--tx);font-weight:600;"></span>
+    <button class="b" id="gsi_signout" style="font-size:11px;padding:3px 8px;" onclick="signOutGoogle()">Sign out</button>
+  </div>
+  <span id="sy" style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--ac2);color:var(--ac);border:1px solid rgba(11,95,255,0.25);">Connecting...</span>
+</div></div></header>
 <nav id="nav"></nav>
 <main>
 <section class="pane" id="lib">
@@ -95,28 +108,7 @@ header{display:flex;justify-content:space-between;gap:12px;align-items:center;fl
  </div><div class="row" style="margin-top:10px;align-items:center"><button class="b p" id="v_save">Save vendor</button><button class="b" id="v_clr">Clear</button><span class="mt" id="v_msg"></span></div></div>
  <div class="card"><h2>Vendor list</h2><div class="w"><table><thead><tr><th>Name</th><th>Code</th><th>GSTIN</th><th>Contact person</th><th>Phone</th><th>Address</th><th></th></tr></thead><tbody id="v_list"></tbody></table></div></div>
 </section>
-<!-- Modal for adding Custom CAD Part / Drawing -->
-<div id="cadModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;padding:16px;">
- <div class="card" style="width:100%;max-width:480px;background:var(--sf);border-radius:12px;padding:22px;box-shadow:0 12px 36px rgba(0,0,0,0.4);max-height:90vh;overflow-y:auto;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-   <h2 style="margin:0;font-size:16px;">+ Add CAD Part / Drawing</h2>
-   <button type="button" class="b" onclick="$('cadModal').style.display='none'" style="padding:2px 8px;">✕</button>
-  </div>
-  <div style="display:flex;flex-direction:column;gap:10px;">
-   <label>Part / Item Code (required)<input id="cad_c" placeholder="e.g. 526.30 or YASH-LEG"></label>
-   <label>Type<select id="cad_t"><option value="P">Part (.sldprt)</option><option value="A">Assembly (.sldasm)</option></select></label>
-   <label>Material / Description<input id="cad_m" placeholder="e.g. MDF 17, BSL or Solid Teak"></label>
-   <label>Default Cost (₹)<input id="cad_cost" type="number" min="0" step="any" placeholder="0"></label>
-   <label>Drawing PDF Link / File ID (Google Drive)<input id="cad_pdf" placeholder="Paste Drive link or File ID"></label>
-   <label>3D View HTML Link / File ID (Google Drive)<input id="cad_html" placeholder="Paste Drive link or File ID"></label>
-   <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
-    <button type="button" class="b" onclick="$('cadModal').style.display='none'">Cancel</button>
-    <button type="button" class="b p" id="cad_add_btn">Save to Library</button>
-   </div>
-   <span id="cad_msg" class="mt" style="font-size:12px;"></span>
-  </div>
- </div>
-</div>
+
 
 <!-- Modal for Google Drive Folder Refresh & Scanner -->
 <div id="driveModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;padding:16px;">
@@ -322,7 +314,132 @@ async function boot(){
    const snap=await docRef.get();
    if(snap.exists){
     st=Object.assign({meta:{},bom:{},po:[],f:{},custom:[],vendors:[]},snap.data());
-    reg();refreshSel();applyF();
+    
+// ---- Google OAuth (GIS Token Model) ----
+// Replace YOUR_GOOGLE_OAUTH_CLIENT_ID with your actual OAuth 2.0 Client ID
+// from Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs
+// Authorized JS origins must include: https://vanya-living.vercel.app
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+let gisTokenClient = null;
+
+function initGoogleOAuth() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    setTimeout(initGoogleOAuth, 500);
+    return;
+  }
+  gisTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: async (tokenResponse) => {
+      if (tokenResponse.error) {
+        console.error('OAuth error:', tokenResponse);
+        $('rfm').textContent = 'Google sign-in failed';
+        return;
+      }
+      st.googleToken = tokenResponse.access_token;
+      st.driveKey = tokenResponse.access_token;
+      save();
+      // Fetch user profile
+      try {
+        const pResp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: 'Bearer ' + tokenResponse.access_token }
+        });
+        const profile = await pResp.json();
+        $('gsi_name').textContent = profile.name || profile.email || '';
+        if (profile.picture) { $('gsi_avatar').src = profile.picture; }
+        $('gsi_btn').style.display = 'none';
+        $('gsi_user').style.display = 'flex';
+      } catch(e) { console.warn('Profile fetch err:', e); }
+      $('rfm').textContent = '🔑 Signed in – scanning Drive…';
+      // Auto-scan Drive if folder is configured
+      if (st.folder) {
+        scanGoogleDriveWithToken(st.folder, tokenResponse.access_token);
+      } else {
+        if (st.folder) $('drv_folder').value = st.folder;
+        $('driveModal').style.display = 'flex';
+      }
+    }
+  });
+}
+
+function triggerGoogleSignIn() {
+  if (!gisTokenClient) { alert('Google Sign-In not ready yet. Please wait a moment.'); return; }
+  gisTokenClient.requestAccessToken();
+}
+
+function signOutGoogle() {
+  st.googleToken = '';
+  st.driveKey = '';
+  save();
+  $('gsi_btn').style.display = '';
+  $('gsi_user').style.display = 'none';
+  $('gsi_name').textContent = '';
+  $('gsi_avatar').src = '';
+  $('rfm').textContent = 'Signed out';
+}
+
+async function scanGoogleDriveWithToken(folderId, token) {
+  const statusEl = $('drv_status'), rfmEl = $('rfm');
+  if (statusEl) statusEl.innerHTML = '<span>⟳ Scanning Drive with your Google account…</span>';
+  try {
+    const res = await fetch(`/api/drive?folderId=${encodeURIComponent(folderId)}`, {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      if (statusEl) statusEl.innerHTML = `<span style="color:#d9534f">⚠️ ${data.error || 'Drive scan failed'}</span>`;
+      if (rfmEl) rfmEl.textContent = 'Drive error – try again';
+      return;
+    }
+    const files = data.files || [];
+    const stats = processScannedCadFiles(files);
+    if (statusEl) statusEl.innerHTML = `<span style="color:var(--ok)">✓ Synced ${files.length} files (${stats.parts} parts, ${stats.assys} assys, ${stats.pdfs} PDFs)</span>`;
+    if (rfmEl) rfmEl.textContent = `Drive synced (${files.length} files) ✓`;
+    setTimeout(() => { if ($('driveModal')) $('driveModal').style.display = 'none'; }, 2000);
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = `<span style="color:#d9534f">⚠️ ${e.message}</span>`;
+    if (rfmEl) rfmEl.textContent = 'Network error';
+  }
+}
+
+// Override drive modal scan button to use OAuth token when available
+setTimeout(() => {
+  const btn = $('drv_scan_btn');
+  if (btn) btn.onclick = () => {
+    const folder = $('drv_folder').value;
+    const key = $('drv_key').value;
+    if (st.googleToken) {
+      scanGoogleDriveWithToken(extractDriveId(folder), st.googleToken);
+    } else {
+      scanGoogleDrive(folder, key);
+    }
+  };
+}, 100);
+
+// Override main refresh button to prefer OAuth token
+setTimeout(() => {
+  $('rf').onclick = e => {
+    if (st.googleToken && st.folder && !e.shiftKey) {
+      scanGoogleDriveWithToken(st.folder, st.googleToken);
+    } else if (st.folder && !e.shiftKey && !e.altKey) {
+      scanGoogleDrive(st.folder, st.driveKey);
+    } else {
+      if (st.folder) $('drv_folder').value = st.folder;
+      if (st.driveKey) $('drv_key').value = st.driveKey;
+      $('driveModal').style.display = 'flex';
+    }
+  };
+}, 200);
+
+// Initialize Google OAuth after page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initGoogleOAuth);
+} else {
+  initGoogleOAuth();
+}
+
+reg();refreshSel();applyF();
     sync('🟢 Cloud Synced (Firestore)');
    } else {
     await docRef.set(JSON.parse(JSON.stringify(st)));
@@ -331,7 +448,132 @@ async function boot(){
    docRef.onSnapshot(doc=>{
     if(doc.exists && !doc.metadata.hasPendingWrites){
      st=Object.assign({meta:{},bom:{},po:[],f:{},custom:[],vendors:[]},doc.data());
-     reg();refreshSel();applyF();
+     
+// ---- Google OAuth (GIS Token Model) ----
+// Replace YOUR_GOOGLE_OAUTH_CLIENT_ID with your actual OAuth 2.0 Client ID
+// from Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs
+// Authorized JS origins must include: https://vanya-living.vercel.app
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+let gisTokenClient = null;
+
+function initGoogleOAuth() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    setTimeout(initGoogleOAuth, 500);
+    return;
+  }
+  gisTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: async (tokenResponse) => {
+      if (tokenResponse.error) {
+        console.error('OAuth error:', tokenResponse);
+        $('rfm').textContent = 'Google sign-in failed';
+        return;
+      }
+      st.googleToken = tokenResponse.access_token;
+      st.driveKey = tokenResponse.access_token;
+      save();
+      // Fetch user profile
+      try {
+        const pResp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: 'Bearer ' + tokenResponse.access_token }
+        });
+        const profile = await pResp.json();
+        $('gsi_name').textContent = profile.name || profile.email || '';
+        if (profile.picture) { $('gsi_avatar').src = profile.picture; }
+        $('gsi_btn').style.display = 'none';
+        $('gsi_user').style.display = 'flex';
+      } catch(e) { console.warn('Profile fetch err:', e); }
+      $('rfm').textContent = '🔑 Signed in – scanning Drive…';
+      // Auto-scan Drive if folder is configured
+      if (st.folder) {
+        scanGoogleDriveWithToken(st.folder, tokenResponse.access_token);
+      } else {
+        if (st.folder) $('drv_folder').value = st.folder;
+        $('driveModal').style.display = 'flex';
+      }
+    }
+  });
+}
+
+function triggerGoogleSignIn() {
+  if (!gisTokenClient) { alert('Google Sign-In not ready yet. Please wait a moment.'); return; }
+  gisTokenClient.requestAccessToken();
+}
+
+function signOutGoogle() {
+  st.googleToken = '';
+  st.driveKey = '';
+  save();
+  $('gsi_btn').style.display = '';
+  $('gsi_user').style.display = 'none';
+  $('gsi_name').textContent = '';
+  $('gsi_avatar').src = '';
+  $('rfm').textContent = 'Signed out';
+}
+
+async function scanGoogleDriveWithToken(folderId, token) {
+  const statusEl = $('drv_status'), rfmEl = $('rfm');
+  if (statusEl) statusEl.innerHTML = '<span>⟳ Scanning Drive with your Google account…</span>';
+  try {
+    const res = await fetch(`/api/drive?folderId=${encodeURIComponent(folderId)}`, {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      if (statusEl) statusEl.innerHTML = `<span style="color:#d9534f">⚠️ ${data.error || 'Drive scan failed'}</span>`;
+      if (rfmEl) rfmEl.textContent = 'Drive error – try again';
+      return;
+    }
+    const files = data.files || [];
+    const stats = processScannedCadFiles(files);
+    if (statusEl) statusEl.innerHTML = `<span style="color:var(--ok)">✓ Synced ${files.length} files (${stats.parts} parts, ${stats.assys} assys, ${stats.pdfs} PDFs)</span>`;
+    if (rfmEl) rfmEl.textContent = `Drive synced (${files.length} files) ✓`;
+    setTimeout(() => { if ($('driveModal')) $('driveModal').style.display = 'none'; }, 2000);
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = `<span style="color:#d9534f">⚠️ ${e.message}</span>`;
+    if (rfmEl) rfmEl.textContent = 'Network error';
+  }
+}
+
+// Override drive modal scan button to use OAuth token when available
+setTimeout(() => {
+  const btn = $('drv_scan_btn');
+  if (btn) btn.onclick = () => {
+    const folder = $('drv_folder').value;
+    const key = $('drv_key').value;
+    if (st.googleToken) {
+      scanGoogleDriveWithToken(extractDriveId(folder), st.googleToken);
+    } else {
+      scanGoogleDrive(folder, key);
+    }
+  };
+}, 100);
+
+// Override main refresh button to prefer OAuth token
+setTimeout(() => {
+  $('rf').onclick = e => {
+    if (st.googleToken && st.folder && !e.shiftKey) {
+      scanGoogleDriveWithToken(st.folder, st.googleToken);
+    } else if (st.folder && !e.shiftKey && !e.altKey) {
+      scanGoogleDrive(st.folder, st.driveKey);
+    } else {
+      if (st.folder) $('drv_folder').value = st.folder;
+      if (st.driveKey) $('drv_key').value = st.driveKey;
+      $('driveModal').style.display = 'flex';
+    }
+  };
+}, 200);
+
+// Initialize Google OAuth after page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initGoogleOAuth);
+} else {
+  initGoogleOAuth();
+}
+
+reg();refreshSel();applyF();
      const t=document.querySelector('.pane.on');if(t)go(t.id);
      sync('🟢 Cloud Synced (Firestore)');
     }
@@ -429,33 +671,15 @@ $('v_list').onclick=async e=>{
  }
 };
 
+
 // ---- Add CAD Part Modal Handlers ----
 const extractDriveId=v=>{
+
  if(!v)return'';
  const m=v.match(/folders\/([-\w]{10,})/i)||v.match(/d\/([-\w]{10,})/i)||v.match(/id=([-\w]{10,})/i)||v.match(/^([-\w]{15,})$/);
  return m?(m[1]||m[2]||m[3]||m[0]):v.trim();
 };
-$('add_cad').onclick=()=>{
- $('cad_c').value='';$('cad_m').value='';$('cad_cost').value='';$('cad_pdf').value='';$('cad_html').value='';$('cad_msg').textContent='';
- $('cadModal').style.display='flex';$('cad_c').focus();
-};
-$('cad_add_btn').onclick=()=>{
- const c=$('cad_c').value.trim();if(!c){$('cad_msg').textContent='Part Code is required.';return}
- const t=$('cad_t').value;
- const m=$('cad_m').value.trim();
- const cost=+$('cad_cost').value||0;
- const pdf=extractDriveId($('cad_pdf').value);
- const html=extractDriveId($('cad_html').value);
- if(!FILES[c]){FILES[c]=[t,pdf?1:0,0];if(!codes.includes(c))codes.push(c)}
- else{FILES[c][0]=t;if(pdf)FILES[c][1]=1}
- st.custom=st.custom||[];if(!st.custom.includes(c))st.custom.push(c);
- if(m||cost){M(c).mat=m;M(c).cost=cost}
- if(pdf){PDF[c]=pdf;st.pdf=st.pdf||{};st.pdf[c]=pdf}
- if(html){HTML[c]=html;st.html=st.html||{};st.html[c]=html}
- refreshSel();save();rLib();
- $('cadModal').style.display='none';
- $('rfm').textContent=`Added ${c} to Library ✓`;
-};
+
 
 // ---- Process CAD Files (SolidWorks .sldprt/.sldasm/.slddrw, PDF, 3D HTML) ----
 function processScannedCadFiles(fileList){
@@ -583,6 +807,131 @@ $('rfm').onclick=()=>{
  if(st.driveKey)$('drv_key').value=st.driveKey;
  $('driveModal').style.display='flex';
 };
+
+
+// ---- Google OAuth (GIS Token Model) ----
+// Replace YOUR_GOOGLE_OAUTH_CLIENT_ID with your actual OAuth 2.0 Client ID
+// from Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client IDs
+// Authorized JS origins must include: https://vanya-living.vercel.app
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+let gisTokenClient = null;
+
+function initGoogleOAuth() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    setTimeout(initGoogleOAuth, 500);
+    return;
+  }
+  gisTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: async (tokenResponse) => {
+      if (tokenResponse.error) {
+        console.error('OAuth error:', tokenResponse);
+        $('rfm').textContent = 'Google sign-in failed';
+        return;
+      }
+      st.googleToken = tokenResponse.access_token;
+      st.driveKey = tokenResponse.access_token;
+      save();
+      // Fetch user profile
+      try {
+        const pResp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: 'Bearer ' + tokenResponse.access_token }
+        });
+        const profile = await pResp.json();
+        $('gsi_name').textContent = profile.name || profile.email || '';
+        if (profile.picture) { $('gsi_avatar').src = profile.picture; }
+        $('gsi_btn').style.display = 'none';
+        $('gsi_user').style.display = 'flex';
+      } catch(e) { console.warn('Profile fetch err:', e); }
+      $('rfm').textContent = '🔑 Signed in – scanning Drive…';
+      // Auto-scan Drive if folder is configured
+      if (st.folder) {
+        scanGoogleDriveWithToken(st.folder, tokenResponse.access_token);
+      } else {
+        if (st.folder) $('drv_folder').value = st.folder;
+        $('driveModal').style.display = 'flex';
+      }
+    }
+  });
+}
+
+function triggerGoogleSignIn() {
+  if (!gisTokenClient) { alert('Google Sign-In not ready yet. Please wait a moment.'); return; }
+  gisTokenClient.requestAccessToken();
+}
+
+function signOutGoogle() {
+  st.googleToken = '';
+  st.driveKey = '';
+  save();
+  $('gsi_btn').style.display = '';
+  $('gsi_user').style.display = 'none';
+  $('gsi_name').textContent = '';
+  $('gsi_avatar').src = '';
+  $('rfm').textContent = 'Signed out';
+}
+
+async function scanGoogleDriveWithToken(folderId, token) {
+  const statusEl = $('drv_status'), rfmEl = $('rfm');
+  if (statusEl) statusEl.innerHTML = '<span>⟳ Scanning Drive with your Google account…</span>';
+  try {
+    const res = await fetch(`/api/drive?folderId=${encodeURIComponent(folderId)}`, {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      if (statusEl) statusEl.innerHTML = `<span style="color:#d9534f">⚠️ ${data.error || 'Drive scan failed'}</span>`;
+      if (rfmEl) rfmEl.textContent = 'Drive error – try again';
+      return;
+    }
+    const files = data.files || [];
+    const stats = processScannedCadFiles(files);
+    if (statusEl) statusEl.innerHTML = `<span style="color:var(--ok)">✓ Synced ${files.length} files (${stats.parts} parts, ${stats.assys} assys, ${stats.pdfs} PDFs)</span>`;
+    if (rfmEl) rfmEl.textContent = `Drive synced (${files.length} files) ✓`;
+    setTimeout(() => { if ($('driveModal')) $('driveModal').style.display = 'none'; }, 2000);
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = `<span style="color:#d9534f">⚠️ ${e.message}</span>`;
+    if (rfmEl) rfmEl.textContent = 'Network error';
+  }
+}
+
+// Override drive modal scan button to use OAuth token when available
+setTimeout(() => {
+  const btn = $('drv_scan_btn');
+  if (btn) btn.onclick = () => {
+    const folder = $('drv_folder').value;
+    const key = $('drv_key').value;
+    if (st.googleToken) {
+      scanGoogleDriveWithToken(extractDriveId(folder), st.googleToken);
+    } else {
+      scanGoogleDrive(folder, key);
+    }
+  };
+}, 100);
+
+// Override main refresh button to prefer OAuth token
+setTimeout(() => {
+  $('rf').onclick = e => {
+    if (st.googleToken && st.folder && !e.shiftKey) {
+      scanGoogleDriveWithToken(st.folder, st.googleToken);
+    } else if (st.folder && !e.shiftKey && !e.altKey) {
+      scanGoogleDrive(st.folder, st.driveKey);
+    } else {
+      if (st.folder) $('drv_folder').value = st.folder;
+      if (st.driveKey) $('drv_key').value = st.driveKey;
+      $('driveModal').style.display = 'flex';
+    }
+  };
+}, 200);
+
+// Initialize Google OAuth after page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initGoogleOAuth);
+} else {
+  initGoogleOAuth();
+}
 
 reg();refreshSel();
 {const h=(location.hash||'#lib').slice(1);go(['lib','po'].includes(h)?h:'lib')}
