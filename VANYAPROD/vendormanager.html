@@ -357,7 +357,7 @@ async function boot(){
   sync('💾 Local Saved');
  }
  applyF();
- if(st.folder)$('rfm').textContent='Drive: '+st.folder.slice(0,8)+'… (Click to scan)';
+  if(st.folder==='17nvpT8l0gUmyXehF_17wMbQWMINKIan5'||(st.folder&&st.googleToken)){delete st.folder;save()}; if(st.folder)$('rfm').textContent='Drive: '+st.folder.slice(0,8)+'… (Click to scan)'; else if(st.googleToken)$('rfm').textContent='🔑 Google Drive (vanya.living.care@gmail.com)';
  const t=document.querySelector('.pane.on');
  go(t?t.id:'lib');
 }
@@ -523,7 +523,7 @@ function initGoogleOAuth() {
 
    $('rfm').textContent = '🔑 Signed in – scanning Drive…';
    // Auto-scan Drive immediately
-   scanGoogleDrive(st.folder, tokenResponse.access_token);
+   delete st.folder;save();scanGoogleDrive(null, tokenResponse.access_token);
   }
  });
 }
@@ -549,8 +549,8 @@ function signOutGoogle() {
 async function scanGoogleDrive(folderInput, apiKeyInput){
  const statusEl=$('drv_status'), rfmEl=$('rfm');
  const token = st.googleToken || apiKeyInput || $('drv_key')?.value || st.driveKey || '';
- const rawFolder = folderInput || $('drv_folder')?.value || st.folder || '';
- const folderId = extractDriveId(rawFolder);
+ const rawFolder = folderInput || (st.googleToken ? '' : ($('drv_folder')?.value || st.folder || ''));
+ const folderId = (rawFolder && rawFolder !== '17nvpT8l0gUmyXehF_17wMbQWMINKIan5') ? extractDriveId(rawFolder) : null;
  if(folderId) st.folder = folderId;
  if(token) st.driveKey = token;
  save();
@@ -578,7 +578,7 @@ async function scanGoogleDrive(folderInput, apiKeyInput){
      let pageToken = '';
      do {
       const q = `'${curFolder}' in parents and trashed = false`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink)&pageSize=1000${pageToken?'&pageToken='+pageToken:''}`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true${pageToken?'&pageToken='+pageToken:''}`;
       const res = await fetch(url, { headers });
       const data = await res.json();
       if(!res.ok) throw new Error(data.error?.message || 'Drive API error');
@@ -597,7 +597,7 @@ async function scanGoogleDrive(folderInput, apiKeyInput){
     let pageToken = '';
     do {
      const q = "trashed = false and (name contains '.sldprt' or name contains '.sldasm' or name contains '.slddrw' or name contains '.step' or name contains '.stp' or name contains '.pdf' or name contains '.html')";
-     const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink)&pageSize=1000${pageToken?'&pageToken='+pageToken:''}`;
+     const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true${pageToken?'&pageToken='+pageToken:''}`;
      const res = await fetch(url, { headers });
      const data = await res.json();
      if(!res.ok) throw new Error(data.error?.message || 'Drive API error');
@@ -683,7 +683,7 @@ $('cad_dir_input').onchange=e=>{
 // Refresh button on header: Scans configured folder or scans user's Drive
 $('rf').onclick=e=>{
  if(st.googleToken && !e.shiftKey && !e.altKey){
-  scanGoogleDrive(st.folder,st.googleToken);
+  scanGoogleDrive(null,st.googleToken);
  } else if(st.folder && !e.shiftKey && !e.altKey){
   scanGoogleDrive(st.folder,st.driveKey);
  } else {
