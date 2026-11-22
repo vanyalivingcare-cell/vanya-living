@@ -1669,6 +1669,11 @@
         </div>
 
         <div class="wa-form-group">
+          <label for="cartCustomerPhone">Contact Number (10 Digits) *</label>
+          <input type="tel" id="cartCustomerPhone" class="wa-input" placeholder="e.g. 9884208336" maxlength="10" pattern="[0-9]{10}" required>
+        </div>
+
+        <div class="wa-form-group">
           <label for="cartCustomerAddress">Delivery Address *</label>
           <textarea id="cartCustomerAddress" class="wa-input"
             placeholder="House/Flat No., Street, Landmark, City, State, Pincode" required></textarea>
@@ -1701,6 +1706,11 @@
       <div class="wa-form-group">
         <label for="buyCustomerName">Customer Name *</label>
         <input type="text" id="buyCustomerName" class="wa-input" placeholder="e.g. Ananya Roy" required>
+      </div>
+
+      <div class="wa-form-group">
+        <label for="buyCustomerPhone">Contact Number (10 Digits) *</label>
+        <input type="tel" id="buyCustomerPhone" class="wa-input" placeholder="e.g. 9884208336" maxlength="10" pattern="[0-9]{10}" required>
       </div>
 
       <div class="wa-form-group">
@@ -1765,16 +1775,27 @@
     function getSavedCustomer() {
       try {
         const raw = localStorage.getItem(CUSTOMER_KEY);
-        return raw ? JSON.parse(raw) : { name: '', address: '' };
+        return raw ? JSON.parse(raw) : { name: '', phone: '', address: '' };
       } catch (e) {
-        return { name: '', address: '' };
+        return { name: '', phone: '', address: '' };
       }
     }
 
-    function saveCustomer(name, address) {
+    function saveCustomer(name, phone, address) {
       try {
-        localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ name, address }));
+        localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ name, phone, address }));
       } catch (e) { }
+    }
+
+    function generateOrderNumber(phone) {
+      const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10).padStart(10, '0');
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const nn = String(now.getMinutes()).padStart(2, '0');
+      return cleanPhone + yy + mm + dd + hh + nn;
     }
 
     function getProductCode(p) {
@@ -2283,8 +2304,10 @@
       renderCart();
       const saved = getSavedCustomer();
       const nameInput = document.getElementById('cartCustomerName');
+      const phoneInput = document.getElementById('cartCustomerPhone');
       const addrInput = document.getElementById('cartCustomerAddress');
       if (nameInput && !nameInput.value) nameInput.value = saved.name || '';
+      if (phoneInput && !phoneInput.value) phoneInput.value = saved.phone || '';
       if (addrInput && !addrInput.value) addrInput.value = saved.address || '';
 
       const drawer = document.getElementById('cartModal');
@@ -2364,13 +2387,21 @@
       }
 
       const nameInput = document.getElementById('cartCustomerName');
+      const phoneInput = document.getElementById('cartCustomerPhone');
       const addrInput = document.getElementById('cartCustomerAddress');
       const customerName = (nameInput ? nameInput.value : '').trim();
+      const rawPhone = (phoneInput ? phoneInput.value : '').trim();
+      const phone = rawPhone.replace(/\D/g, '').slice(-10);
       const address = (addrInput ? addrInput.value : '').trim();
 
       if (!customerName) {
         alert('Please enter your Customer Name.');
         if (nameInput) nameInput.focus();
+        return;
+      }
+      if (!phone || phone.length !== 10) {
+        alert('Please enter a valid 10-digit Contact Number.');
+        if (phoneInput) phoneInput.focus();
         return;
       }
       if (!address) {
@@ -2379,7 +2410,7 @@
         return;
       }
 
-      saveCustomer(customerName, address);
+      saveCustomer(customerName, phone, address);
 
       let grandTotal = 0;
       let totalCount = 0;
@@ -2392,11 +2423,14 @@
         return `${idx + 1}. *${item.name}*\n   • Product Code: ${item.code || 'N/A'}\n   • Quantity: ${qty}\n   • Unit Price: ₹${price.toLocaleString('en-IN')}\n   • Subtotal: ₹${itemTotal.toLocaleString('en-IN')}`;
       }).join('\n\n');
 
+      const orderNo = generateOrderNumber(phone);
+
       const message = [
-        `🌿 *NEW ORDER FROM VANYA LIVING* 🌿`,
+        `🌿 *CART ORDER - VANYA LIVING* 🌿`,
         ``,
         `*Customer Details:*`,
         `• Customer Name: ${customerName}`,
+        `• Contact Number: ${phone}`,
         `• Delivery Address: ${address}`,
         ``,
         `*Cart Items:*`,
@@ -2404,6 +2438,8 @@
         ``,
         `*Total Items:* ${totalCount}`,
         `*Grand Total:* ₹${grandTotal.toLocaleString('en-IN')}`,
+        ``,
+        `Order No. #${orderNo}`,
         ``,
         `Please confirm the order, availability, and dispatch timeline. Thank you!`
       ].join('\n');
@@ -2465,8 +2501,10 @@
 
       const saved = getSavedCustomer();
       const nameInput = document.getElementById('buyCustomerName');
+      const phoneInput = document.getElementById('buyCustomerPhone');
       const addrInput = document.getElementById('buyCustomerAddress');
       if (nameInput) nameInput.value = saved.name || '';
+      if (phoneInput) phoneInput.value = saved.phone || '';
       if (addrInput) addrInput.value = saved.address || '';
 
       const buyModal = document.getElementById('buyNowModal');
@@ -2486,13 +2524,21 @@
       const p = directBuyProduct;
 
       const nameInput = document.getElementById('buyCustomerName');
+      const phoneInput = document.getElementById('buyCustomerPhone');
       const addrInput = document.getElementById('buyCustomerAddress');
       const customerName = (nameInput ? nameInput.value : '').trim();
+      const rawPhone = (phoneInput ? phoneInput.value : '').trim();
+      const phone = rawPhone.replace(/\D/g, '').slice(-10);
       const address = (addrInput ? addrInput.value : '').trim();
 
       if (!customerName) {
         alert('Please enter your Customer Name.');
         if (nameInput) nameInput.focus();
+        return;
+      }
+      if (!phone || phone.length !== 10) {
+        alert('Please enter a valid 10-digit Contact Number.');
+        if (phoneInput) phoneInput.focus();
         return;
       }
       if (!address) {
@@ -2501,17 +2547,18 @@
         return;
       }
 
-      saveCustomer(customerName, address);
+      saveCustomer(customerName, phone, address);
 
-        const code = getProductCode(p);
-        const has3d = p.model3d || ((p.code && p.code.toUpperCase() === 'YASH1') || (p.name && p.name.toUpperCase().includes('YASH1'))) || (p.images && p.images.some(x => is3dItem(x)));
+      const code = getProductCode(p);
       const priceVal = parseFloat(p.price) || 0;
+      const orderNo = generateOrderNumber(phone);
 
       const message = [
         `🌿 *DIRECT ORDER — VANYA LIVING* 🌿`,
         ``,
         `*Customer Details:*`,
         `• Customer Name: ${customerName}`,
+        `• Contact Number: ${phone}`,
         `• Delivery Address: ${address}`,
         ``,
         `*Product Ordered:*`,
@@ -2520,6 +2567,8 @@
         `• Price: ₹${priceVal.toLocaleString('en-IN')}`,
         `• Material: ${p.material || 'Reclaimed Handcrafted Wood'}`,
         p.dimensions ? `• Dimensions (cm): ${p.dimensions}` : '',
+        ``,
+        `Order No. #${orderNo}`,
         ``,
         `Please confirm order availability and dispatch schedule. Thank you!`
       ].filter(Boolean).join('\n');
