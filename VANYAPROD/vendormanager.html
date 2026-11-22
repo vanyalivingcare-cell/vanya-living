@@ -117,6 +117,33 @@ header{display:flex;justify-content:space-between;gap:12px;align-items:center;fl
   </div>
  </div>
 </div>
+
+<!-- Modal for Google Drive Folder Refresh & Scanner -->
+<div id="driveModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+ <div class="card" style="width:100%;max-width:520px;background:var(--sf);border-radius:12px;padding:22px;box-shadow:0 12px 36px rgba(0,0,0,0.4);max-height:90vh;overflow-y:auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+   <h2 style="margin:0;font-size:16px;">⟳ Sync SolidWorks Files from Google Drive</h2>
+   <button type="button" class="b" onclick="$('driveModal').style.display='none'" style="padding:2px 8px;">✕</button>
+  </div>
+  <p style="font-size:12.5px;color:var(--mt);margin:0 0 12px;line-height:1.45;">
+   Scan your Google Drive folder for new CAD parts (<code>.sldprt</code>), assemblies (<code>.sldasm</code>), drawings (<code>.slddrw</code>), PDFs, and 3D HTML viewers.
+  </p>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+   <label>Google Drive CAD Folder Link or ID
+    <input id="drv_folder" placeholder="https://drive.google.com/drive/folders/1ABC... or folder ID">
+   </label>
+   <label>Google API Key / OAuth Token (optional if public)
+    <input id="drv_key" type="password" placeholder="Optional: Google Drive API Key or OAuth Token">
+   </label>
+   <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+    <button type="button" class="b p" id="drv_scan_btn" style="flex:1;">⟳ Scan Drive Folder</button>
+    <button type="button" class="b" id="drv_local_btn" style="white-space:nowrap;" title="Select SolidWorks CAD directory from your computer">📂 Scan Local CAD Folder</button>
+   </div>
+   <input type="file" id="cad_dir_input" webkitdirectory directory multiple style="display:none">
+   <div id="drv_status" class="mt" style="font-size:12px;min-height:18px;"></div>
+  </div>
+ </div>
+</div>
 </main>
 <script>
 const LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAACmCAMAAADAruWXAAAAwFBMVEX///////79/////v7+/v/+/v7+/v3+/f39/v79/f39/fz9/Pz7/f/8/Pz8/Pv6/Pz7+/v19/ns7vDi4+TW1tbGxcS4trStqaaalY+EfHRyaFxjVUZePyZcMxJcMxFaOB5EOidcMhFaMhFbMQ5aMRBZMRBZMBBYMA9BMRpaLw1YLw9YLw5MLxFYLQtWKgdPKg1RJQJOJANMIQBKHwBIJAhHHwFIHgBEHgIYLRcWLBYUKxQUKhQTKhMSKhIMJAwCGQLbWnhWAAAZjElEQVR42u1daWOiStNt9RJHiUZE2VFxfd1xRxPx//+rt6tBo0l3gwnJozP2pztzM1GPxantVDVCf9cRMkhSDWs0HZl6FSERPc6PnBxCqrWaTfqt/mQ+NasPpH/mZFHZ2Eycdm84HHadlrvRUPGByg/wxlPZXNvd4fE0WxjpwgOXxE/+j7Gwh2enV9soD/ZI/BSQurnAeTjsjEeykHtAk3DAIVmT7iXQQ3tuPMgjcYNWVh8MGp/a6kEeCR8RGfPmJ6C743o5m32gkyBzpJ7NT8wRksfDpJMEGpXr495noIetZeWBdKJJoTzqU3AeNl3zT/6Bz89bNPGHj8gjQaRfTLdDA7ozMaXsfw+AkjolpM9tGtBDe60+ah5JxtHVVW3IMOln4QFQYuepxOCOoYNZ+mHSiZq0M2QEHulH0pJkbshi6UcsHRVJ5Aolcgq5GCSbfcIRXpfKHXP9ATQ7BSnlOH+kk4dK94e9cb2MHv6QDhrAKsmKquGjKhUJ//FPVN5RSBuzJiNpST2SFhpi2PxkzWy8HsLz2jC1CuaSQkQeXlm2qO5wZqBHA4BCzQgp5vZw8Pdbj5zt3vcPr6aKsfzzFX84GI8e3EGhWlQ1D4e9t929vh3Pbuvt/YOpIG7dIifIo/GAlh2uHtnhZ5zLxsHfbt9BPp6t5x8MmfAKz6QdBnc8angXtIFDB++w3b5Rz3Z78DTEifXyGTpLP+KOz/SsHXzvjXm8/cFAHMiyf+iJuPMoln6wZ51pziFZewdD+iPwYmmaO7QX+oOk308J4+y9MhDebSEG2b55BzPD5GkhVbYmlAZAd2KVUg+Az3GmgrwlAR4cf4eR1vGPMk4R6QuKSQ/6Ixn9eUB8fOwPlGADo4wx9hqmoeuabhKk2aI6kZG0PEj6LK+TX/e7z5zsH/yGoamqphuGWTUO27fdfl9hZnqgO+jQ+iwa+zH4K/ybkMs9xQqsCoL5iTheMcwNHWNseoQ5GsoBXCWmaWY2XqSH0jEiaXirwj3iWyiWxKfwgS4IcYjD+xzMNTRFb/iQjWNXeMAGTX7GO6gsIijS4w7sDSVeJC0UgkJqNl5N9hYABnwzp794keSKLCEURZCZP4WGv/0YyXmaYuxxYL192+/fdr5XbviEXHZ+QxIEFgNRFR7gDXO8vB/hd1opB2+meLtoE4SLp47RS1muVFXNMC2YKLEMVUJZgR9xKB8Meotzk6ruH948jLB32L9tD0bFD0mc7Q+F1ItFE4c5yyrzy05nw9mXad3QlBDtfKkg3B7CTyeAQ3zro+lqvZi7k2CiZGOpiJsDC4J5adCe/6Yo3gFijn2j8bojwUZA0XyTzlLljry6kpBBqrWZT8at1thdr6Z1Uw8q4ChVvAWwCUtkzxHWMcAhvuN+y7HtZrvbHQwHvaY92egSx6Zz6GSs5OwxbVQgG3/dHRpGw9+DiR8U7WT1+A+MKKKEtLV9TdghPL3om4nd7A2Gw17bdvpjd7GaWoZWlQOwi/87HhEKpVKegjAGOMS396Fa2bE3RloU2MyhXTCHd2jIOJLb7fa+ab4G38H2QIK74w+wNOaglHbojUO6RReejY19FhEOeh271prM1yuYopPThEd+HWxomB4hloElCMLzEGEM8JB17I3GbpEK4oUr3PoNGYI9TBu6eXjbhX9ZMU9Ag2ekcxGjz9J2zbRAT3G0zecnYNBt2g6YNgZbDXgk+0tgA8RhOPGMIdax88A2PCMIOzyEj2/d2VRTjFBWQLJ3lqzs9q8YU2+/9T29ccT2de9VGu/8svMZSYsAYceAIliynpnfy4D+lrFpY7DnqyX25r8DNqaKkIylioJ9XQBxH1giGuHTw8vOGfDjftieE4eqY5w939O8U9EU+z/Z808p+pYVShNhKQ1oM00tYWPfafPso+MAjwDYWgC2+CNgEzsOIJYBYguIYjImEA+GVx1O5+6Sor2DrhJ7bpzhjJE1zx0ms7QkIIlWwOtAxhI/7P5g2k27NXHX75adbDQiiCEdY6rQCFNgLsZm3OxcCfGx68/UdRbQu5sDjqh6/g7zhtrwL+A/D7W3TG+YEmjFf0aTpYTUtR3r3ROwZwHYL4mFfhC6pQKPB3ZcX61nAcS9r2Ec5fjPgcbxMpSl977SOI9EvIOiXwBtMjK9FLoCaPqQERdsoBFdIdGI+K0MUjjGFeWjHQNVXM0UlMLO3EB0teEf9J6uYINWvD3AbWD+OAv5/Mp5ZLL1TQYPXQX0E/7h9lWfIgQbQr/y11lEKBQzoc/TzfryZMfDJE4HR1iZSKAxJ2DLxXHyZWSNLbh6ntP8z4AmJSqHhH71kEVwLHIVWxQDr0cIebpauONWEnZ8CTSKBtrH1IwdYXW/f71IYRTjHPn/KdAkGrEdbNhTzCJlwthiLMPOBVXCZxkb8miJyQIbckJ2HAfoM45+xbHGYYszbPM84Ptk0Dxn+CtAk98ZRH5g2Ok4xeAcAfmlgjNpzMguEHLSGMcHGiOKmeNgXFandzu/ellGvQWgjywyWwNjSxFYQ6/iWVZ1zBbE63V+BGTyWZnF99J71X97IH3B8ySQlKbVD41bKJTSi0SpNBVo+ot/G+jAPfbdBcR9Moew8d9WdBxbzCetmtMZDH/w4IxFpocdZ8W7ra97e5KxXJSmNe1w2RaA8l3hmoSF+jjBaLPbTeCjBYw9wmEfiURylI9Y1keLSb/mdH8U5NOMA6M+IXkh0jsA+vWiquEdfFU77C4a5K/7V/mqWkd7RostybfSTeiBdWpjIGwNCDvzAWucgVrrlv0LIPN7/u8kvfe0ixwQpI1mVT/sLhvkOCxhuHnG1BA9W4JvZZwcVwLWs/XU1D9iLWTK1tz+HZTD2coSs5N1BFrfH6pByPG6xSwC/dnGJwETm6IZSTW98I85a9pK1hHhfMbFWINwHp0kVfkXc24Pf+00mVM7AiqHddLdXvcblT0wBhHOGFrVoOkeWVVS1gwtvZWFzX/ZSvxzds6wDt+kuvkZnHtU3utOzJcMK8ALowrM0T72fN7Ox/AaqqKZPkX3CA0WRjaW+Y8qKHVWtOZsESmMgdtvO8cAayl40XJinuDUmOi0HdtpjSfMsIOpEng9ZnweKP79ho5RNrzD4Y0iL91igy4gZjm6F1duwGgwJmfXVvD1qjMnKYR7naZdwwC77hwayda0f50CDtyhF9T3G1UPM4ZmNDBB76kqXnbHkJBBO7aABvPMggpBy3a6SWA9WZL+hD5rfp8lMMK205+488VqObJMQwdphETNA0CmzFDA5QR5Cyz9ut9qFVM3sSn7b96WKuLFsV2FtWeNYaNtl1o5hP4KNV+BMkQrgeyt2doA0ua3mKMHDUxsxLMFEUMYmlqVT10MqgIOSDolsEwxKNdtcXKCQzpsyjum7p8jJ82ia77iDDWLHLamKimszaEe0f4W2LB8L4Xq48EXqTiAOGAJQ1erobwHv/VssVTIlQR646I1ZepAhYJohuQBw0Ic1b93aDBVRCyKpkeWjCxyMK5LUPyBUjFUMbFlfz0EtufGMxpdD3Sv49gBxEsMMbBE2FzOiKVi/qgeYs1W8tSzmDyCFuGObcuBI/TYMrpShqrqYHzDEEbTO+alYhALlgnYaygZt78INry0dQ3Qg24b3B12dpiKAWI5hDhb/CQKZBlWxzXZAyj4Y3u8SaFj4cNnq+gI6TYZvjBDFdvUaIsnoF8P7bxM0GkitWN3XPuSZTszHbF2iVAxxv4Ou7u6qWtV+SXsuDFFrtm0Qa2KMcsdYcTwGoX0dn9Q2ZJyklIP6F20PNVz0gYxztJ1oRDoCuWqZkLlrX89jWDHhLS5E4MrQoxxRKEfpZYciPkBKnBHkfOvKt6Bi7Tn+wpHus98WbrEEds/Le76QHBCIRg0khUocy7cfu26en1/hOQ6t6Iy6BCuCDEOI4pMsZQXIts2rCJCb2KVOf+6hOQGZwAOJjqrHJz/E14s2mAFg6IZvpBkkR/sX8iXMqcWFNSU7e41QCOdmRf1Qu0ZiFiDFiRCT1cItFMv1FkSTmEpZA9J9xlBx3br+0aZJ2kvInVNy6ixd3tJMaxhQE9gc9TONVFTy6phLRcY65iGjYHO4Ry8yVBBzdaBwK8cOrwrJQyMOTTilnia9ByZufc9b/dxOAvmWaqIuw8iy/p26fOcjEIf7BVjN1eLoX+0lusZBH4xgJ7iN11dTuxLt+dgRg6kZoE++IuDBsxlUlGbBqC1pjYg+fZwzkLOFv8n1EtVxB25Zxo0kfuLNCGpTgtRnIjNsYFc4KWiGXVs2E5U3AfOEP++6sg9/uSAuL35mVL1G8McqQyjdxFl0hBQI1GBctLB9/393ieznJ6hlBB/v3kmW6IzNLwkJSFlTWHEGJUT8qFhaxaJ+3gk4sw1YngVc+P2nVqt5vSJ29PVID7+7gxHkVUY4wcep9mdsqIZjQbsRWk0cNReRpEDRwWWjo7BHCyHzRt3udDBQPHkJYj7xo7T43RKSYSTVkFlsCKUrAQgJzFNwGxeQOM/avRQKASftFTGJ7CuQtT3LmRZVd/WskqNolNUU7hi54Qgku8Pe8c6jkQcaiRir/UQkBSE46qqKkQFgsRCQtv4smlGJx84MHrVAI5eT2ZViPN0MR+hNmPDYBZRkypGoY9JIiTuI94RIpGP1NWcYLM6fozjf6SKhQR3PLEVsc4m7mC2QE6sHxWZXSnGZmN2/enaaWahAM+LRMPanozOI/inQrGYKMjHzi/9Ue5C6TDpV8tKdE8YuMIMvf5Uix+iRGFNIpGqbmLn2ArS9EHXrs3/r/rzw/7MZ3loz8w/xWTnE0qMuJ3tfBn1py+vBRLygOgzdo4Y636rBTXODSyB+mmc8XPPWlOe/LIBzFMbepcVgKOxD4s5mldR9KdIBFJHCESmyyWO4H7pDjqRaWUDoOlSkjhXWbNVLIMuZugbNr9rAzkyKiFXKhWocT79ysQc7KHr0z8+pulKcg9VAcl1OkEzDRpiDmrHlFvIjfm5S6FLKP7WDjiRXbXCYY+c1GMFwjaX0Wa2F/T+ImYOqhisA23NBN4SPsLvDdtyWHpou1Y5GZsWUdmcMb5PpkEzK9fzu9wnVuAIVHDokQjSBSSxhW3AuHR17zO9vXSn14mwo1tiPKb8fespIZmNM4xxUqsJBaG6dKiNiTvd+VhAyoYpbrNnlvzd2APjbLGFmkxpFATRzpDeLrzP7ekib9badutV9J3MRcCJd91l48yqLOcyjHjofte2CdlynUkeQwe0aV//ZNAjWE6YDeZBf1rJ5K6J8O+WOchnUjbsXnunv9ElJApfNOeysWmxm0k263pfZoB/1/cuFDktYLiCF6StXzBqAbvRqrWocVaxzIy0yIrv6Xx21wsfhbxEawGfVRI3ehmlxKtZowyrkDi9uvFIphMH06BZhb47OXnOkhdCH86irj2jbHxTEgoZJGn1hcPrQdeYVW+mQcfost04eUSMcNjjjVmFHxTikkZasTZj/u9cs7TYzJCDPQh5P0gbCy4qPdtdmsozwmYd2U3ESEiquZrYPb5a1pQYPpa53ce5+xtqn7Jly+XPirQdd2Nq4Yzvf8xyL9ibrFkb1+ErV5oTq8wowrF7XvSBopvyd3CrFU8CkkOV0SRijANDvRoF89Sgdbj4bcJpDVxZNUbrSa0TqbNnXkQmpg16qa/jmi83TRy50ycqcpbvV0bjKPlUxx7PAOtQ6ofyxeAcl8oScdBq1o8UGPZaG+YdhswrtW49tsNpAypXFE0j+Ihsmq4u+5FCtUGzBlhfjBLAkeAVDGu6no1rzUh9cg8mdEqcTLXLMOg/N2zQ2IYrRn25Wq9XSwtzbJ5d/VF4Wdy5jLUPCstlHZbNk2MEGzlnMQWcPYeNM1N8eesGLSBJX87Jvsxaa7KuqyifZiKtbsaxJgyOs0izeXiCjZzNeJJkjDNnUIZ1cRnIbJ5v16Dxg2huWsdAq4vjYZ1tFdiml+Mrdp91mk5wmp34+yKHndaGnXUIYom1COWmDTojps31+XaEns1Hujqa/PCQP6kHltiegtXx6dy0QYuf3vegxpN7lYhK+Cdxtt1RlZ1Fs0Po225h5TKfx/S64zqjlBNYVMX6ycUV9tyqcGa22I21Jg45cjds0JTiDM59n3nxdNnY1Lo/AzN2g2aZO/TFumj5a4K7X4w4aENNfKlPDqX1iHLQlwfcsStOc8QvJXZt67YvSxXpYyqD1oZXMhCySKnP7cSXvg0wPSs8CVaBLRsDeVLqdm+WLDIE0N0x984T/AXJxqafsFE3W2uzwism59iyMTJ7ccNlO+b6Fse1pGyW2x3RRvNaJ1FzXmovvLABO0LTdVhzU1Y5K9wh0NhCDG7DFdNHxdhMEttPZvfBnHnadkFMs0vit65O4mx+Iu2NNOIatWKtk+GPZms+wuZc5BsFu0PcZDZxbyWMZtYNgk5/ifuPs0jC/NH69lKnpjNf6jLij2qUqHeAvKs/Ujd9Pztv3+TAiUIajFrWlxjqbxDIwGm5G6MSJVeAwI75Mkwd5O2cAm9on1MTPrX/oMS6nI/tL7rFnt2fL+FW9ggBDuDcYsWTzsxM33qjkCd/xkgvI6cnnvAnrEJrijl3yu0RTNYjo4pQNhfltJUlE+feD0yI/UTKwtERdPpLNVIrmstDs9XEZl27Bute2x7PV5aOSSMbZY6AM7u3Y2/Ue9AmsfsVEJ6SynBUfAodx+eqXl8B1nHW6AzIxUrYmGE+XIw0xgicY03x3kLhH/vDNrfXEZ0JgCAGlRWjvplP+jW7zV6yTFovsBugHigTom+LEDA/c3Du3Hiqchni9XscpPV0HAbMw/NfJpcMkLv6bNtpv1+uM+h1u23HrrX74eV3ZNdBPsZ8uJDHcV2LWSwctG65aPep4MGRew1qG0OKxYHBjC/ZWWSNlqvF3AXAgzMeT44bOQ0tuNPnKZZ6LIfSGjveCKL9u9HalbiqXBylmnHHJ8KdRcFFidD6Hk2DM6pblqnDRs5A8BH3Mp8iFL85PhYqBfejaRTy7GpNOKhyxfhEtnC6vzYN1xqTI5ellyPHlOLvBiihisWT/DVdTNB3pGnk1R8D/TMO8zJXhKqCIBZL4gcEsmKpKF6zrgXTs8JtUJLh3Ry6o0Mq6pwguN3f6C9feEbhFvdcMIJ6/RAqlGI3Y86TNuDIxm64XsrVP/dqUMUUfzGMwlEdf7wlRtnrHpEGFcB3pq+uz1hRNeI6DrZO/aYdooh0PtLQOJV+yahxAiTpy0nEPIDxLN7hnJsgpnX+rQS92sJS0G+QYgHMec3XU9oLU3q6y3lCIftsRNz/YE9g8c1PJ2K5J1SOMmcyd5HKIXSfSEtRSHec+UiTIqua34JZRGm1voiQB5O9CneKMyyglIwotZc9XkOdvij8FIHBBtlIeQ625zvGGTYVSpEXQvWAPyoRu1y/+vpF0rBxo7Q5944zIF2OvnoL+EPHVJ30lj0oa8v6aN6KEmATnO97yA0uRzQXkQoCp78gUGcTNGsxD/dfjhbRTfX7t+cA6UiPSGRFADVcjVZM5BNDk5fAPI5W5OC4rozyCN0/0s/6ptaLhnq8mBqKBMs6he+iLMKqSmM570fDPMB5inT/9kw+9xO0NKLlAwO75W4scuOf+HWsg+2rsmauYslDSMPn78CZhFhqPP0zyAWmphq3K0WJMqCSWlaIXCHODFKzH6uFeTenGHtQpYvNelU3wqvir4lDcoVgMSXZkB1TgEPq4uLfg3OwIG0RUylK9Bl1Q5WDJeGlyDsFoCsQ3NJB5pU5O9+vGm+5z1PAwUesKdmAOJ1xcIFDePdWJuilCB8BzomFUjHou6ShhzuNusXg4uGprXG48ZfhTO5K0ZbxJwp7zVpwfxH0uE83IqLs+3lfvwOd20CVEPvCmWDziv58v9uSOA94HhZLXTGoEl5NsobbouAGyoosXVw68yyV5aqi6QZoEebudXeDDex5XUFPAvobD+klja9SPwc6pAlcWrucjizLPDuWVccIr0Fd49jOdRewNVubJHZz3urBeYQ6ml09fTXodhy7BiP3E/fsTCbjfrtm283utWpqMt6S/htp4yyirpib/hcl/YNep/1+Ot1e72t6dZjWqqKnHPqbTxGlNWzUPzQnG0+q7k416e+ljVP08QRGndz01dXTWuONWUEoh/7+g41atdZ9538BM5nWSv9YP+f2jLqsj+ZO+7dh7tRcmNbK5NC/cshI0MZNclA2ThllQpZDFtA/dMheXKDq7m/CbKnpv6uEFIs/8uhZsVYT+1esukNglv4l1jhLX1JIUjHUtR/n6nbNJTD/W6xxSdVl1Vy5jvOTwV4TVpwSmAX0rx7ooT4r5jcmZWM0EuYbsrT3H4b5CDVMyq7cVvIbaHqOM1lPYZL2X4c5IJBMOCn7lalk7rzyeB40ezOFB8pBBCLCjX+6dUUXKhJl6IeNjOpLjIHlfyuuTpEbWoObhzuDb8ZytfFp73Qx90D3s1mjsqJb5IZW52tgQ6OgBRfGByiL4oOaqY4RsMZ2DdeXu2PnupL+oNcmra/V1NIVQDn/cIBRWKcrpNm6npMmVTtqr24PpsKh4UWauWoFOovZ4gPlKKxFIoRJy1XNsABtsinaabY7H+x70Ot22m0HWlzugrRwsSWTcdriw5bj8nWRgI2eMdo67D6fzWcwcd9vvZ8+aSHi/zGtW4auVkNRgvjwflezSCmMyyS5Qibuzfpo+X5Gdcs0DeN97h49RYuabuf8P5tZsaQf8JFJAAAAAElFTkSuQmCC',LOGO_R=2.1687;
@@ -309,6 +336,27 @@ async function boot(){
      sync('🟢 Cloud Synced (Firestore)');
     }
    },err=>{console.warn('onSnapshot error:',err);sync('💾 Local Saved')});
+
+   // Sync vendors collection from Firestore
+   try{
+    const vSnap=await db.collection('vendors').get();
+    if(!vSnap.empty){
+     const vMap=new Map((st.vendors||[]).map(v=>[v.id,v]));
+     vSnap.forEach(d=>{vMap.set(d.id,Object.assign({id:d.id},d.data()))});
+     st.vendors=Array.from(vMap.values());
+     fillVsel();
+    }
+    db.collection('vendors').onSnapshot(vColSnap=>{
+     if(!vColSnap.metadata.hasPendingWrites && !vColSnap.empty){
+      const vMap=new Map();
+      vColSnap.forEach(d=>vMap.set(d.id,Object.assign({id:d.id},d.data())));
+      st.vendors=Array.from(vMap.values());
+      fillVsel();
+      if(document.querySelector('.pane.on')?.id==='vd')rVen();
+     }
+    },err=>console.warn('Vendors onSnapshot err:',err));
+   }catch(ve){console.warn('Vendors fetch error:',ve)}
+
   }catch(e){
    console.warn('Firestore boot error:',e);
    sync('💾 Local Saved');
@@ -317,6 +365,7 @@ async function boot(){
   sync('💾 Local Saved');
  }
  applyF();
+ if(st.folder)$('rfm').textContent='Drive: '+st.folder.slice(0,8)+'… (Click to scan)';
  const t=document.querySelector('.pane.on');
  go(t?t.id:'lib');
 }
@@ -334,18 +383,58 @@ function rVen(){st.vendors=st.vendors||[];
  fillVsel()}
 function vClear(){vEdit=null;VF.forEach(k=>$('v_'+k).value='');$('v_t').textContent='Add vendor';$('v_save').textContent='Save vendor'}
 $('v_clr').onclick=()=>{vClear();$('v_msg').textContent=''};
-$('v_save').onclick=()=>{const o={};VF.forEach(k=>o[k]=$('v_'+k).value.trim());
+$('v_save').onclick=async()=>{
+ const o={};VF.forEach(k=>o[k]=$('v_'+k).value.trim());
  if(!o.n){$('v_msg').textContent='Enter the vendor name';return}
  st.vendors=st.vendors||[];
- if(vEdit){const v=st.vendors.find(x=>x.id===vEdit);if(v){Object.assign(v,o);if(st.f.vid===v.id)applyVendor(v)}}
- else{const id='v'+Date.now().toString(36);st.vendors.push(Object.assign({id},o))}
- $('v_msg').textContent=vEdit?'Vendor updated':'Vendor added';vClear();save();rVen()};
-$('v_list').onclick=e=>{const d=e.target.dataset;st.vendors=st.vendors||[];
- if(d.ed!=null){const v=st.vendors[+d.ed];if(!v)return;vEdit=v.id;VF.forEach(k=>$('v_'+k).value=v[k]||'');$('v_t').textContent='Edit vendor';$('v_save').textContent='Update vendor';window.scrollTo({top:0,behavior:'smooth'})}
- if(d.dl!=null){const v=st.vendors[+d.dl];if(v&&confirm('Delete vendor "'+v.n+'"?')){st.vendors.splice(+d.dl,1);if(st.f.vid===v.id)st.f.vid='';if(vEdit===v.id)vClear();save();rVen()}}};
+ let targetVendor=null;
+ if(vEdit){
+  targetVendor=st.vendors.find(x=>x.id===vEdit);
+  if(targetVendor){Object.assign(targetVendor,o);if(st.f.vid===targetVendor.id)applyVendor(targetVendor)}
+ }else{
+  const id='v'+Date.now().toString(36);
+  targetVendor=Object.assign({id},o);
+  st.vendors.push(targetVendor);
+ }
+ // Save to Firestore vendors collection
+ const db=getFirestoreDb();
+ if(db && targetVendor){
+  try{
+   await db.collection('vendors').doc(targetVendor.id).set(JSON.parse(JSON.stringify(targetVendor)));
+  }catch(e){console.warn('Firestore vendor save err:',e)}
+ }
+ $('v_msg').textContent=vEdit?'Vendor updated ✓':'Vendor added ✓';
+ vClear();save();rVen();
+};
+$('v_list').onclick=async e=>{
+ const d=e.target.dataset;st.vendors=st.vendors||[];
+ if(d.ed!=null){
+  const v=st.vendors[+d.ed];if(!v)return;vEdit=v.id;
+  VF.forEach(k=>$('v_'+k).value=v[k]||'');$('v_t').textContent='Edit vendor';$('v_save').textContent='Update vendor';
+  window.scrollTo({top:0,behavior:'smooth'});
+ }
+ if(d.dl!=null){
+  const v=st.vendors[+d.dl];
+  if(v&&confirm('Delete vendor "'+v.n+'"?')){
+   const vid=v.id;
+   st.vendors.splice(+d.dl,1);
+   if(st.f.vid===vid)st.f.vid='';
+   if(vEdit===vid)vClear();
+   const db=getFirestoreDb();
+   if(db){
+    try{await db.collection('vendors').doc(vid).delete()}catch(err){console.warn('Firestore vendor delete err:',err)}
+   }
+   save();rVen();
+  }
+ }
+};
 
 // ---- Add CAD Part Modal Handlers ----
-const extractDriveId=v=>{if(!v)return'';const m=v.match(/d\/([-\w]{15,})|id=([-\w]{15,})|^([-\w]{20,})$/);return m?(m[1]||m[2]||m[3]):v.trim()};
+const extractDriveId=v=>{
+ if(!v)return'';
+ const m=v.match(/folders\/([-\w]{10,})/i)||v.match(/d\/([-\w]{10,})/i)||v.match(/id=([-\w]{10,})/i)||v.match(/^([-\w]{15,})$/);
+ return m?(m[1]||m[2]||m[3]||m[0]):v.trim();
+};
 $('add_cad').onclick=()=>{
  $('cad_c').value='';$('cad_m').value='';$('cad_cost').value='';$('cad_pdf').value='';$('cad_html').value='';$('cad_msg').textContent='';
  $('cadModal').style.display='flex';$('cad_c').focus();
@@ -368,18 +457,133 @@ $('cad_add_btn').onclick=()=>{
  $('rfm').textContent=`Added ${c} to Library ✓`;
 };
 
-// ---- Drive folder setup / refresh ----
-async function refreshDrive(){
- const b=$('rf'),m=$('rfm');
- const cur=st.folder||'';
- const v=prompt('Google Drive CAD Folder Link or Folder ID:',cur?`https://drive.google.com/drive/folders/${cur}`:'');
- if(v===null)return;
- const id=extractDriveId(v);
- if(!id){m.textContent='Could not read Drive folder link';return}
- st.folder=id;save();
- m.textContent='Drive folder linked: '+id.slice(0,8)+'… · Synced ✓';
+// ---- Process CAD Files (SolidWorks .sldprt/.sldasm/.slddrw, PDF, 3D HTML) ----
+function processScannedCadFiles(fileList){
+ let parts=0,assys=0,drawings=0,pdfs=0,htmls=0;
+ fileList.forEach(f=>{
+  const raw=f.name||'';
+  const m=raw.match(/\.([a-zA-Z0-9]+)$/);
+  if(!m)return;
+  const ext=m[1].toLowerCase();
+  const c=raw.slice(0,-m[0].length).trim();
+  if(!c)return;
+
+  if(['sldprt','prt','step','stp'].includes(ext)){
+   if(!FILES[c]){FILES[c]=['P',0,0];if(!codes.includes(c))codes.push(c)}
+   else{FILES[c][0]='P'}
+   st.custom=st.custom||[];if(!st.custom.includes(c))st.custom.push(c);
+   parts++;
+  }else if(['sldasm','asm'].includes(ext)){
+   if(!FILES[c]){FILES[c]=['A',0,0];if(!codes.includes(c))codes.push(c)}
+   else{FILES[c][0]='A'}
+   st.custom=st.custom||[];if(!st.custom.includes(c))st.custom.push(c);
+   assys++;
+  }else if(['slddrw','dwg','dxf'].includes(ext)){
+   if(FILES[c]){FILES[c][1]=1}
+   else{FILES[c]=['P',1,0];if(!codes.includes(c))codes.push(c);st.custom=st.custom||[];if(!st.custom.includes(c))st.custom.push(c)}
+   drawings++;
+  }else if(ext==='pdf'){
+   const fid=f.id||f.webViewLink||c;
+   PDF[c]=fid;st.pdf=st.pdf||{};st.pdf[c]=fid;
+   if(FILES[c])FILES[c][1]=1;
+   else{FILES[c]=['P',1,0];if(!codes.includes(c))codes.push(c);st.custom=st.custom||[];if(!st.custom.includes(c))st.custom.push(c)}
+   pdfs++;
+  }else if(['html','htm'].includes(ext)){
+   const fid=f.id||f.webViewLink||c;
+   HTML[c]=fid;st.html=st.html||{};st.html[c]=fid;
+   if(!FILES[c]){FILES[c]=['P',0,0];if(!codes.includes(c))codes.push(c);st.custom=st.custom||[];if(!st.custom.includes(c))st.custom.push(c)}
+   htmls++;
+  }
+ });
+ refreshSel();save();rLib();
+ return {parts,assys,drawings,pdfs,htmls,total:fileList.length};
 }
-$('rf').onclick=refreshDrive;
+
+// ---- Google Drive scanning & Refresh handler ----
+async function scanGoogleDrive(folderInput, apiKeyInput){
+ const statusEl=$('drv_status'),rfmEl=$('rfm');
+ const rawFolder=folderInput||$('drv_folder')?.value||st.folder||'';
+ const folderId=extractDriveId(rawFolder);
+ if(!folderId){
+  if(statusEl)statusEl.innerHTML='<span style="color:#d9534f">⚠️ Please enter a Google Drive folder link or ID.</span>';
+  $('driveModal').style.display='flex';$('drv_folder').focus();
+  return false;
+ }
+
+ st.folder=folderId;
+ const key=apiKeyInput||$('drv_key')?.value||st.driveKey||'';
+ if(key)st.driveKey=key;
+ save();
+
+ if(statusEl)statusEl.innerHTML='<span>⟳ Connecting to Google Drive…</span>';
+ if(rfmEl)rfmEl.textContent='Scanning Drive…';
+
+ try{
+  let url=`/api/drive?folderId=${encodeURIComponent(folderId)}`;
+  if(key)url+=`&key=${encodeURIComponent(key)}`;
+  const res=await fetch(url);
+  const data=await res.json();
+
+  if(!res.ok || !data.success){
+   const msg=data.error||'Failed to read Drive folder.';
+   if(statusEl){
+    statusEl.innerHTML=`<span style="color:#d9534f">⚠️ ${msg}</span><br><span style="font-size:11.5px;color:var(--mt)">Ensure the Drive folder is shared ("Anyone with the link can view"), or enter a Drive API key / OAuth token, or use "Scan Local CAD Folder".</span>`;
+    $('driveModal').style.display='flex';
+   }
+   if(rfmEl)rfmEl.textContent='Drive scan error (click to configure)';
+   return false;
+  }
+
+  const files=data.files||[];
+  const stats=processScannedCadFiles(files);
+  const summary=`Drive synced ✓ Found ${files.length} files (${stats.parts} parts, ${stats.assys} assys, ${stats.drawings} drawings, ${stats.pdfs} PDFs)`;
+  if(statusEl)statusEl.innerHTML=`<span style="color:var(--ok)">✓ ${summary}</span>`;
+  if(rfmEl)rfmEl.textContent=`Drive synced (${files.length} files) ✓`;
+  setTimeout(()=>{if($('driveModal'))$('driveModal').style.display='none'},2000);
+  return true;
+ }catch(err){
+  console.error('Drive scan error:',err);
+  if(statusEl){
+   statusEl.innerHTML=`<span style="color:#d9534f">⚠️ Network error: ${err.message}</span>`;
+   $('driveModal').style.display='flex';
+  }
+  if(rfmEl)rfmEl.textContent='Network error scanning Drive';
+  return false;
+ }
+}
+
+// Drive Modal Button Wiring
+$('drv_scan_btn').onclick=()=>scanGoogleDrive($('drv_folder').value,$('drv_key').value);
+$('drv_local_btn').onclick=()=>$('cad_dir_input').click();
+$('cad_dir_input').onchange=e=>{
+ const files=Array.from(e.target.files||[]);
+ if(!files.length)return;
+ const fileList=files.map(f=>({name:f.name,id:f.name}));
+ const stats=processScannedCadFiles(fileList);
+ const summary=`Local CAD scan ✓ Found ${fileList.length} files (${stats.parts} parts, ${stats.assys} assys, ${stats.drawings} drawings, ${stats.pdfs} PDFs)`;
+ $('drv_status').innerHTML=`<span style="color:var(--ok)">✓ ${summary}</span>`;
+ $('rfm').textContent=`Local CAD Synced (${fileList.length} files) ✓`;
+ setTimeout(()=>{if($('driveModal'))$('driveModal').style.display='none'},2000);
+};
+
+// Refresh button on header: Scans configured folder or opens modal to set one
+$('rf').onclick=e=>{
+ if(st.folder && !e.shiftKey && !e.altKey){
+  scanGoogleDrive(st.folder,st.driveKey);
+ }else{
+  if(st.folder)$('drv_folder').value=st.folder;
+  if(st.driveKey)$('drv_key').value=st.driveKey;
+  $('driveModal').style.display='flex';
+ }
+};
+$('rfm').style.cursor='pointer';
+$('rfm').title='Click to configure Google Drive folder';
+$('rfm').onclick=()=>{
+ if(st.folder)$('drv_folder').value=st.folder;
+ if(st.driveKey)$('drv_key').value=st.driveKey;
+ $('driveModal').style.display='flex';
+};
+
 reg();refreshSel();
 {const h=(location.hash||'#lib').slice(1);go(['lib','po'].includes(h)?h:'lib')}
 boot();
