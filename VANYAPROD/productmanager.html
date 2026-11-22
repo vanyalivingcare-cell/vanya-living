@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -607,7 +607,250 @@
         width: 100%;
       }
     }
+    /* ── 3-Segment Tab Navigation ── */
+    .pm-tabs-bar {
+      position: sticky;
+      top: 61px;
+      z-index: 90;
+      background: rgba(35, 37, 23, 0.96);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(204, 169, 117, 0.2);
+      padding: 0 clamp(20px, 5vw, 60px);
+    }
+
+    .pm-tabs {
+      display: flex;
+      gap: 8px;
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .pm-tabs::-webkit-scrollbar { display: none; }
+
+    .pm-tab {
+      background: none;
+      border: none;
+      color: var(--lichen);
+      font: 500 14px var(--sans);
+      padding: 14px 22px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .pm-tab:hover {
+      color: var(--cream);
+      background: rgba(204, 169, 117, 0.06);
+    }
+
+    .pm-tab.on {
+      color: var(--cream);
+      border-bottom-color: var(--caramel);
+      background: rgba(204, 169, 117, 0.12);
+      font-weight: 600;
+    }
+
+    .pm-tab-icon {
+      font-size: 16px;
+    }
+
+    .pm-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(204, 169, 117, 0.25);
+      color: var(--caramel);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    .pm-segment {
+      display: none;
+    }
+
+    .pm-segment.on {
+      display: block;
+      animation: pmFadeIn 0.2s ease;
+    }
+
+    @keyframes pmFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Sales Order Styles ── */
+    .so-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(204, 169, 117, 0.15);
+      border-radius: var(--radius);
+      padding: clamp(18px, 3vw, 30px);
+      margin-bottom: 24px;
+    }
+
+    .so-card h3 {
+      font: 400 18px var(--serif);
+      color: var(--caramel);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .so-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .so-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .so-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(204, 169, 117, 0.18);
+      background: rgba(0, 0, 0, 0.2);
+      margin-top: 12px;
+    }
+
+    .so-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 760px;
+    }
+
+    .so-table th,
+    .so-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(204, 169, 117, 0.12);
+      text-align: left;
+    }
+
+    .so-table th {
+      background: rgba(45, 46, 28, 0.85);
+      color: var(--caramel);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      font-size: 11.5px;
+      text-transform: uppercase;
+    }
+
+    .so-table th.n,
+    .so-table td.n {
+      text-align: right;
+    }
+
+    .so-table input,
+    .so-table select,
+    .so-table textarea {
+      background: rgba(255, 253, 240, 0.06);
+      border: 1px solid rgba(204, 169, 117, 0.25);
+      border-radius: 8px;
+      color: var(--cream);
+      padding: 6px 10px;
+      font: 13px var(--sans);
+      width: 100%;
+    }
+
+    .so-table input:focus,
+    .so-table select:focus,
+    .so-table textarea:focus {
+      border-color: var(--caramel);
+      outline: none;
+    }
+
+    .so-table input.n {
+      text-align: right;
+    }
+
+    .so-totals {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+
+    .so-totals-row {
+      display: flex;
+      justify-content: space-between;
+      min-width: 280px;
+      padding: 4px 0;
+      color: var(--lichen);
+    }
+
+    .so-totals-row.grand {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--cream);
+      border-top: 1.5px solid rgba(204, 169, 117, 0.3);
+      padding-top: 10px;
+    }
+
+    /* Live Preview Sheet */
+    .so-sheet {
+      background: #faf8f2;
+      color: #1a1a1a;
+      border-radius: 14px;
+      padding: clamp(20px, 4vw, 40px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      margin-top: 24px;
+      border: 1px solid rgba(204, 169, 117, 0.35);
+      font-family: var(--sans);
+    }
+
+    .so-sheet h2 {
+      color: #1a1a1a;
+      font: 400 24px var(--serif);
+      margin-bottom: 4px;
+    }
+
+    .so-sheet-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 13px;
+    }
+
+    .so-sheet-table th {
+      background: #eae6db;
+      color: #2d2e1c;
+      padding: 8px 10px;
+      border-bottom: 1.5px solid #ccc;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .so-sheet-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e0ded6;
+      color: #222;
+    }
+
+    .so-sheet-table th.n,
+    .so-sheet-table td.n {
+      text-align: right;
+    }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="vanya-pdf-assets.js"></script>
 </head>
 
 <body>
@@ -632,7 +875,22 @@
 
   <div class="page">
 
-    <!-- ADD / EDIT FORM -->
+    <!-- SEGMENT 1: DASHBOARD (Active by default) -->
+    <div class="pm-segment on" id="seg-dashboard">
+<!-- PRODUCT LIST -->
+  <section class="products-section">
+    <div class="products-toolbar">
+      <h2 style="margin-bottom:0">Live Products on Site</h2>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="text" class="search-box" id="searchBox" placeholder="Search products…" oninput="renderProducts()">
+        <span class="count-badge" id="countBadge">0 products</span>
+        <button type="button" class="btn sm" onclick="goSeg('product')">+ Add New Product</button>
+        <button type="button" class="btn sm ghost" onclick="goSeg('salesorder')" style="color:var(--caramel);">📑 View Sales Order</button>
+    </div>
+
+    <!-- SEGMENT 2: ADD NEW PRODUCT -->
+    <div class="pm-segment" id="seg-product">
+<!-- ADD / EDIT FORM -->
     <section class="form-card">
       <h2 id="formTitle">Add New Product</h2>
 
@@ -764,6 +1022,7 @@
           Save Product
         </button>
         <button type="button" class="btn ghost" onclick="resetForm()">Clear Form</button>
+        <button type="button" class="btn ghost danger" id="btnCancelEdit" style="display:none;" onclick="cancelEdit()">✕ Cancel Edit</button>
         <a class="btn ghost" href="index.html" target="_blank">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
@@ -777,22 +1036,287 @@
         </button>
       </div>
     </section>
+    </div>
 
-  <!-- PRODUCT LIST -->
-  <section class="products-section">
-    <div class="products-toolbar">
-      <h2 style="margin-bottom:0">Live Products on Index</h2>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input type="text" class="search-box" id="searchBox" placeholder="Search products…" oninput="renderProducts()">
-        <span class="count-badge" id="countBadge">0 products</span>
+    <!-- SEGMENT 3: SALES ORDER -->
+    <div class="pm-segment" id="seg-salesorder">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 style="margin-bottom:4px;">📑 Sales Order</h2>
+          <p style="font-size:13px; color:var(--lichen);">Create and print customized Sales Orders with live products from your catalog. Stored locally only — not saved to remote database.</p>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn" onclick="printSalesOrderPdf()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>⬇ Download Sales Order PDF</span>
+          </button>
+          <button type="button" class="btn ghost danger" onclick="resetSalesOrder()">⟳ Reset Order</button>
+        </div>
+      </div>
+
+      <!-- Order & Customer Details -->
+      <div class="so-card">
+        <h3><span>📋</span> Order &amp; Customer Information</h3>
+        <div class="so-grid-3">
+          <div class="field">
+            <label for="so_no">Sales Order #</label>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="so_no" placeholder="SO-20261122-001">
+              <button type="button" class="btn sm ghost" onclick="generateSoNumber()" style="white-space:nowrap;">Generate</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="so_date">Order Date</label>
+            <input type="date" id="so_date">
+          </div>
+          <div class="field">
+            <label for="so_delivery">Delivery / Dispatch Date</label>
+            <input type="date" id="so_delivery">
+          </div>
+          <div class="field">
+            <label for="so_rep">Sales Representative</label>
+            <input type="text" id="so_rep" placeholder="e.g. Yash / Vanya Living Sales">
+          </div>
+          <div class="field">
+            <label for="so_cname">Customer / Company Name *</label>
+            <input type="text" id="so_cname" placeholder="e.g. Rohit Mehra / Urban Craft Studio">
+          </div>
+          <div class="field">
+            <label for="so_cphone">Customer Contact / Phone *</label>
+            <input type="tel" id="so_cphone" placeholder="e.g. 9884208336">
+          </div>
+          <div class="field">
+            <label for="so_cemail">Customer Email</label>
+            <input type="email" id="so_cemail" placeholder="e.g. customer@example.com">
+          </div>
+          <div class="field">
+            <label for="so_cgst">Customer GSTIN</label>
+            <input type="text" id="so_cgst" placeholder="e.g. 08AAAAA0000A1Z5">
+          </div>
+          <div class="field">
+            <label for="so_paymode">Payment Terms Summary</label>
+            <input type="text" id="so_paymode" placeholder="e.g. 50% Advance, 50% Before Dispatch">
+          </div>
+        </div>
+
+        <div class="so-grid-2" style="margin-top:12px;">
+          <div class="field">
+            <label for="so_baddr">Bill To Address *</label>
+            <textarea id="so_baddr" rows="3" placeholder="Billing address with City, State, Pincode"></textarea>
+          </div>
+          <div class="field">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label for="so_saddr" style="margin-bottom:0;">Ship To Address *</label>
+              <label style="font-size:12px; color:var(--caramel); display:inline-flex; align-items:center; gap:5px; cursor:pointer; text-transform:none;">
+                <input type="checkbox" id="so_same_addr" onchange="toggleSameAddress(this.checked)" checked style="width:auto;">
+                <span>Same as Billing Address</span>
+              </label>
+            </div>
+            <textarea id="so_saddr" rows="3" placeholder="Shipping / Site address with City, State, Pincode"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Line Items Section -->
+      <div class="so-card">
+        <h3><span>🪑</span> Products &amp; Line Items</h3>
+        
+        <!-- Quick Selector from Dashboard -->
+        <div style="background:rgba(255,253,240,0.04); border:1px solid rgba(204,169,117,0.2); border-radius:12px; padding:16px; margin-bottom:16px;">
+          <label style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--caramel); margin-bottom:8px; display:block;">Quick-Select Product from Dashboard</label>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <select id="so_dash_prod" style="flex:1; min-width:240px; background:rgba(0,0,0,0.3); color:var(--cream); border:1px solid rgba(204,169,117,0.3); border-radius:8px; padding:8px 12px; font:14px var(--sans);">
+              <option value="">— Select a live product from dashboard —</option>
+            </select>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; color:var(--lichen);">Qty:</span>
+              <input type="number" id="so_dash_qty" value="1" min="1" style="width:75px; background:rgba(0,0,0,0.3); color:var(--cream); border:1px solid rgba(204,169,117,0.3); border-radius:8px; padding:8px; text-align:center;">
+            </div>
+            <button type="button" class="btn sm" onclick="addSelectedDashboardProduct()">+ Add to Order</button>
+            <button type="button" class="btn sm ghost" onclick="addBlankSoLine()">+ Add Custom Line</button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="so-table-wrap">
+          <table class="so-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">#</th>
+                <th style="width:130px;">Product Code</th>
+                <th>Description / Material</th>
+                <th style="width:100px;">HSN</th>
+                <th class="n" style="width:85px;">Qty</th>
+                <th class="n" style="width:130px;">Unit Rate (₹)</th>
+                <th class="n" style="width:140px;">Amount (₹)</th>
+                <th style="width:50px;"></th>
+              </tr>
+            </thead>
+            <tbody id="so_tbody">
+              <!-- Rendered lines -->
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:16px; flex-wrap:wrap; gap:16px;">
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn sm ghost" onclick="addBlankSoLine()">+ Add Blank Line</button>
+            <button type="button" class="btn sm ghost danger" onclick="clearSoLines()">Clear Lines</button>
+          </div>
+
+          <!-- Totals -->
+          <div class="so-totals">
+            <div class="so-totals-row">
+              <span>Subtotal:</span>
+              <strong id="so_subtotal" style="color:var(--cream);">₹0.00</strong>
+            </div>
+            <div class="so-totals-row" style="align-items:center; gap:8px;">
+              <span>GST:</span>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <input type="number" id="so_gst_pct" value="18" min="0" max="28" style="width:55px; text-align:center; padding:3px 6px; font-size:12px;">
+                <span>%</span>
+              </div>
+              <strong id="so_gst_amt" style="color:var(--cream); min-width:90px; text-align:right;">₹0.00</strong>
+            </div>
+            <div class="so-totals-row grand">
+              <span>Total Amount:</span>
+              <span id="so_grand_total" style="color:var(--caramel);">₹0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terms & Notes -->
+      <div class="so-card">
+        <h3><span>📜</span> Sales Terms, Delivery &amp; Notes</h3>
+        <div class="so-grid-2">
+          <div class="field">
+            <label for="so_ptm">Payment Terms</label>
+            <textarea id="so_ptm" rows="3"></textarea>
+          </div>
+          <div class="field">
+            <label for="so_dlm">Delivery &amp; Freight Terms</label>
+            <textarea id="so_dlm" rows="3"></textarea>
+          </div>
+          <div class="field">
+            <label for="so_wrm">Warranty &amp; Craftsmanship Policy</label>
+            <textarea id="so_wrm" rows="2"></textarea>
+          </div>
+          <div class="field">
+            <label for="so_rem">Special Remarks / Client Customizations</label>
+            <textarea id="so_rem" rows="2" placeholder="Finishing notes, custom dimensions, packing instructions..."></textarea>
+          </div>
+        </div>
+
+        <div class="so-grid-3" style="margin-top:12px;">
+          <div class="field">
+            <label for="so_og">Vanya Living GSTIN</label>
+            <input type="text" id="so_og" value="Not Applicable">
+          </div>
+          <div class="field">
+            <label for="so_oc">Company Contact</label>
+            <input type="text" id="so_oc" value="9884208336">
+          </div>
+          <div class="field">
+            <label for="so_as">Authorized Signatory</label>
+            <input type="text" id="so_as" value="Vanya Living Sales Team">
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Preview Sheet -->
+      <div class="so-sheet" id="soPreviewSheet">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #2d2e1c; padding-bottom:14px; margin-bottom:16px;">
+          <div>
+            <h2 style="font-size:26px; font-weight:700; color:#2d2e1c; letter-spacing:0.5px; margin:0;">SALES ORDER</h2>
+            <div style="font-size:13px; color:#666; margin-top:4px;">
+              <span id="so_prev_no" style="font-weight:700; color:#2d2e1c;">#SO-</span> &nbsp;·&nbsp;
+              Date: <span id="so_prev_date">—</span> &nbsp;·&nbsp;
+              Delivery: <span id="so_prev_del">—</span>
+            </div>
+            <div style="font-size:12px; color:#777; margin-top:2px;">Representative: <span id="so_prev_rep">—</span></div>
+          </div>
+          <div style="text-align:right;">
+            <img src="assets/vanya.logo.png" alt="Vanya Living" style="height:46px; object-fit:contain; display:block; margin-left:auto;">
+            <div style="font-size:11px; color:#666; margin-top:4px;">Handcrafted Heritage Furniture</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:18px; font-size:12.5px; line-height:1.5;">
+          <div style="background:#f1ede2; padding:12px 14px; border-radius:8px;">
+            <strong style="color:#2d2e1c; font-size:13px; display:block; margin-bottom:4px;">Bill To:</strong>
+            <div id="so_prev_cname" style="font-weight:600; color:#1a1a1a;">—</div>
+            <div id="so_prev_cphone" style="color:#444;">—</div>
+            <div id="so_prev_cemail" style="color:#444;">—</div>
+            <div id="so_prev_cgst" style="color:#444;">—</div>
+            <div id="so_prev_baddr" style="white-space:pre-line; margin-top:4px; color:#555;">—</div>
+          </div>
+          <div style="background:#f1ede2; padding:12px 14px; border-radius:8px;">
+            <strong style="color:#2d2e1c; font-size:13px; display:block; margin-bottom:4px;">Ship To / Delivery Site:</strong>
+            <div id="so_prev_sname" style="font-weight:600; color:#1a1a1a;">—</div>
+            <div id="so_prev_saddr" style="white-space:pre-line; color:#555;">—</div>
+          </div>
+        </div>
+
+        <table class="so-sheet-table">
+          <thead>
+            <tr>
+              <th style="width:36px;">#</th>
+              <th style="width:120px;">Code</th>
+              <th>Item &amp; Description</th>
+              <th style="width:90px;">HSN</th>
+              <th class="n" style="width:70px;">Qty</th>
+              <th class="n" style="width:110px;">Rate (₹)</th>
+              <th class="n" style="width:120px;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="so_prev_tbody">
+            <!-- Preview lines -->
+          </tbody>
+        </table>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <div style="min-width:260px; font-size:13px; line-height:1.8;">
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding:4px 0;">
+              <span>Subtotal:</span>
+              <strong id="so_prev_sub">₹0.00</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding:4px 0;">
+              <span id="so_prev_gst_label">GST (18%):</span>
+              <strong id="so_prev_gst">₹0.00</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700; color:#2d2e1c; padding:6px 0;">
+              <span>Grand Total:</span>
+              <span id="so_prev_tot">₹0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px; font-size:11.5px; color:#555; border-top:1px solid #ddd; padding-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div>
+            <strong>Terms &amp; Conditions:</strong>
+            <div id="so_prev_terms" style="white-space:pre-line; margin-top:4px;">—</div>
+          </div>
+          <div style="text-align:right;">
+            <strong>For Vanya Living</strong>
+            <div style="margin-top:24px; font-weight:600; color:#2d2e1c;" id="so_prev_signatory">Authorized Signatory</div>
+            <div style="font-size:10.5px; color:#888;">*Computer generated sales order</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:24px;">
+        <button type="button" class="btn" onclick="printSalesOrderPdf()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>⬇ Download Sales Order PDF</span>
+        </button>
+        <button type="button" class="btn ghost danger" onclick="resetSalesOrder()">⟳ Reset Order</button>
       </div>
     </div>
-    <div class="prod-grid" id="prodGrid"></div>
-  </section>
 
   </div>
 
-  <!-- FOOTER -->
+    <!-- FOOTER -->
   <footer>
     <img src="assets/vanya.logo.png" alt="Vanya Living" class="footer-logo"><br>
     <p>© 2026 Vanya Living — Admin & Product Manager</p>
@@ -1153,6 +1677,10 @@
       editingId = null;
       const ft = document.getElementById('formTitle');
       if (ft) ft.textContent = 'Add New Product';
+      const tabLabel = document.getElementById('tabProductLabel');
+      if (tabLabel) tabLabel.textContent = 'Add New Product';
+      const cancelBtn = document.getElementById('btnCancelEdit');
+      if (cancelBtn) cancelBtn.style.display = 'none';
       const sb = document.getElementById('saveBtn');
       if (sb) sb.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Product`;
 
@@ -1224,6 +1752,7 @@
         toast(editingId ? '✓ Product updated! Changes live on index.html' : '✓ Product added! Changes live on index.html');
         resetForm();
         renderProducts();
+        goSeg('dashboard');
       }
     }
 
@@ -1243,6 +1772,8 @@
 
       const badge = document.getElementById('countBadge');
       if (badge) badge.textContent = `${products.length} product${products.length !== 1 ? 's' : ''}`;
+      const dashBadge = document.getElementById('dashCount');
+      if (dashBadge) dashBadge.textContent = products.length;
 
       const grid = document.getElementById('prodGrid');
       if (!grid) return;
@@ -1284,6 +1815,7 @@
           ${p.description ? `<div class="prod-desc">${p.description}</div>` : ''}
           <div class="prod-actions">
             <button class="btn sm" onclick="editProduct('${p.id}')">Edit</button>
+            <button class="btn sm ghost" onclick="addToSalesOrder('${p.id}')" style="color:var(--caramel);border-color:rgba(204,169,117,0.35);" title="Add this item to Sales Order">+ Sales Order</button>
             <button class="btn sm danger" onclick="confirmDelete('${p.id}', '${safeName}')">Delete</button>
           </div>
         </div>
@@ -1298,8 +1830,18 @@
       editingId = p.id;
       fillForm(p);
       document.getElementById('formTitle').textContent = 'Edit Product';
+      const tabLabel = document.getElementById('tabProductLabel');
+      if (tabLabel) tabLabel.textContent = 'Edit Product';
+      const cancelBtn = document.getElementById('btnCancelEdit');
+      if (cancelBtn) cancelBtn.style.display = 'inline-flex';
       document.getElementById('saveBtn').innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Update Product`;
+      goSeg('product');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+      resetForm();
+      goSeg('dashboard');
     }
 
     // ── Delete confirm ──
