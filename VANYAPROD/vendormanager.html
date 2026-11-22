@@ -92,7 +92,7 @@ header{display:flex;justify-content:space-between;gap:12px;align-items:center;fl
  </div></div>
  <div class="card" id="sheet"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2>PURCHASE ORDER <span id="pnv" class="mt"></span></h2><img id="lg" alt="Company logo" style="height:48px;max-width:40%"></div>
   <div class="row" style="justify-content:space-between"><div><b id="vnv"></b><div id="vav" class="mt" style="white-space:pre-line"></div></div><div style="text-align:right"><div id="pdv"></div><div id="pvv"></div></div></div>
-  <div class="w" style="margin-top:10px"><table><thead><tr><th>#</th><th>Part code</th><th>Description / material</th><th>Drawing PDF</th><th>HTML</th><th class="n">Unit consume</th><th class="n">Qty</th><th class="n">Rate (₹)</th><th class="n">Amount (₹)</th><th class="np"></th></tr></thead><tbody id="pb"></tbody></table></div>
+  <div class="w" style="margin-top:10px"><table><thead><tr><th>#</th><th>Part code</th><th>Description / material</th><th>Drawing PDF</th><th>HTML</th><th class="n">Qty</th><th class="n">Rate (₹)</th><th class="n">Amount (₹)</th><th class="np"></th></tr></thead><tbody id="pb"></tbody></table></div>
   <div class="np" style="margin-top:8px"><button class="b" id="addp">+ Add line</button> <button class="b" id="clr">Clear lines</button></div>
   <div class="tot"><label style="max-width:110px;flex:none">GST %<input id="gp" type="number" value="18" min="0"></label></div>
   <div class="tot"><span>Subtotal: <span id="ps"></span></span><span>GST: <span id="pg"></span></span><span>Total: <span id="pt"></span></span></div>
@@ -229,7 +229,7 @@ const poNo=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return ''+d.ge
 if(!$('pn').value||/^PO-\d{4}-001$/.test($('pn').value))$('pn').value=poNo();
 function rPo(){
  const l=st.po;
- $('pb').innerHTML=l.map((r,i)=>`<tr><td>${i+1}</td><td><select data-i="${i}" data-k="c">${codeOpts(r.c)}</select></td><td>${esc(G(r.c).mat)||'<span class="mt">—</span>'}</td><td>${pdfLink(r.c)}</td><td>${htmlLink(r.c)}</td><td class="n"><input class="n" type="number" min="0" step="any" data-i="${i}" data-k="u" value="${r.u||''}"></td><td class="n"><input class="n" type="number" min="1" data-i="${i}" data-k="q" value="${r.q}"></td><td class="n"><input class="n" type="number" min="0" step="any" data-i="${i}" data-k="r" value="${r.r||''}"></td><td class="n">${inr(r.q*r.r)}</td><td class="np"><button class="b" data-del="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="10" class="mt">No lines – click “Add line”.</td></tr>';
+ $('pb').innerHTML=l.map((r,i)=>`<tr><td>${i+1}</td><td><select data-i="${i}" data-k="c">${codeOpts(r.c)}</select></td><td>${esc(G(r.c).mat)||'<span class="mt">—</span>'}</td><td>${pdfLink(r.c)}</td><td>${htmlLink(r.c)}</td><td class="n"><input class="n" type="number" min="1" data-i="${i}" data-k="q" value="${r.q}"></td><td class="n"><input class="n" type="number" min="0" step="any" data-i="${i}" data-k="r" value="${r.r||''}"></td><td class="n">${inr(r.q*r.r)}</td><td class="np"><button class="b" data-del="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="9" class="mt">No lines – click “Add line”.</td></tr>';
  const s=l.reduce((t,r)=>t+r.q*r.r,0),g=s*(+$('gp').value||0)/100;
  $('ps').textContent=inr(s);$('pg').textContent=inr(g);$('pt').textContent=inr(s+g);
  $('pnv').textContent='#'+$('pn').value;$('vnv').textContent=$('vn').value||'Vendor name';
@@ -238,7 +238,7 @@ function rPo(){
 }
 F.forEach(i=>$(i).oninput=()=>{st.f[i]=$(i).value;save();rPo()});
 $('gen').onclick=()=>{const n=poNo();$('pn').value=n;$('pd').value=n.slice(0,4)+'-'+n.slice(4,6)+'-'+n.slice(6,8);st.f.pn=$('pn').value;st.f.pd=$('pd').value;save();rPo()};
-$('addp').onclick=()=>{st.po.push({c:codes.find(c=>FILES[c][0]==='P'),q:1,r:0,u:0});save();rPo()};
+$('addp').onclick=()=>{st.po.push({c:codes.find(c=>FILES[c][0]==='P'),q:1,r:0});save();rPo()};
 $('clr').onclick=()=>{st.po=[];save();rPo()};
 $('pb').onchange=e=>{const d=e.target.dataset;if(d.i!=null){const r=st.po[d.i];if(d.k==='c'){r.c=e.target.value;r.r=G(r.c).cost||r.r}else r[d.k]=+e.target.value||0;save();rPo()}};
 $('pb').onclick=e=>{if(e.target.dataset.del!=null){st.po.splice(+e.target.dataset.del,1);save();rPo()}};
@@ -257,16 +257,16 @@ function mkPdf(){
  const col=(x,items)=>{let yy=y;items.forEach(([t,ls])=>{if(!ls.length)return;d.setFont('helvetica','bold');d.text(t,x,yy);yy+=5;d.setFont('helvetica','normal');d.text(ls,x,yy);yy+=ls.length*4.6+1.5});return yy};
  y=Math.max(col(L,[['Vendor',vl]]),col(108,[['Bill to',bl],['Ship to',sl]]))+4;
  const hdr=()=>{d.setFont('helvetica','bold');d.setFontSize(9);d.setFillColor(235,238,243);d.rect(L,y-4.5,R-L,7,'F');
-  txt('#',L+1);txt('Part code',L+8);txt('Description / material',L+30);txt('PDF link',76);txt('HTML link',94);txt('Unit cons.',126,{align:'right'});txt('Qty',140,{align:'right'});txt('Rate',166,{align:'right'});txt('Amount',R-1,{align:'right'});
+  txt('#',L+1);txt('Part code',L+8);txt('Description / material',L+34);txt('PDF link',94);txt('HTML link',115);txt('Qty',138,{align:'right'});txt('Rate',166,{align:'right'});txt('Amount',R-1,{align:'right'});
   y+=7;d.setFont('helvetica','normal')};
  hdr();let sub=0;
  st.po.forEach((r,i)=>{const amt=(+r.q||0)*(+r.r||0);sub+=amt;
-  const desc=d.splitTextToSize(G(r.c).mat||'-',28),h=Math.max(desc.length,1)*4.6+2;
+  const desc=d.splitTextToSize(G(r.c).mat||'-',42),h=Math.max(desc.length,1)*4.6+2;
   if(y+h>H-40){d.addPage();y=18;hdr()}
-  txt(i+1,L+1);txt(r.c,L+8);d.text(desc,L+30,y);
-  if(PDF[r.c]){d.setTextColor(11,95,255);d.textWithLink('Open PDF',76,y,{url:'https://drive.google.com/file/d/'+PDF[r.c]+'/view'});d.setTextColor(0,0,0)}else txt('-',76);
-  if(HTML[r.c]){d.setTextColor(11,95,255);d.textWithLink('Open HTML',94,y,{url:'https://drive.google.com/file/d/'+HTML[r.c]+'/view'});d.setTextColor(0,0,0)}else txt('-',94);
-  txt(r.u?r.u:'-',126,{align:'right'});txt(r.q,140,{align:'right'});txt(rs(r.r),166,{align:'right'});txt(rs(amt),R-1,{align:'right'});
+  txt(i+1,L+1);txt(r.c,L+8);d.text(desc,L+34,y);
+  if(PDF[r.c]){d.setTextColor(11,95,255);d.textWithLink('Open PDF',94,y,{url:'https://drive.google.com/file/d/'+PDF[r.c]+'/view'});d.setTextColor(0,0,0)}else txt('-',94);
+  if(HTML[r.c]){d.setTextColor(11,95,255);d.textWithLink('Open HTML',115,y,{url:'https://drive.google.com/file/d/'+HTML[r.c]+'/view'});d.setTextColor(0,0,0)}else txt('-',115);
+  txt(r.q,138,{align:'right'});txt(rs(r.r),166,{align:'right'});txt(rs(amt),R-1,{align:'right'});
   y+=h;d.setDrawColor(217,221,227);d.line(L,y-3.2,R,y-3.2)});
  if(!st.po.length){txt('No lines',L+1);y+=6}
  if(y>H-45){d.addPage();y=18}
