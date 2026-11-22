@@ -209,11 +209,6 @@ function rLib(){
  vis=l;$('all').checked=l.length>0&&l.every(c=>sel.has(c));updBar();
  $('lc').textContent=l.length+' of '+codes.length+' items · PDFs on Drive for '+Object.keys(PDF).length+' items · HTML for '+Object.keys(HTML).length+' items';
 }
- const l=codes.filter(c=>(!fs||ser(c)===fs)&&(!ft||FILES[c][0]===ft)&&(!q||(c+' '+G(c).mat).toLowerCase().includes(q)));
- $('lb').innerHTML=l.map(c=>{const f=FILES[c];return `<tr><td><input type="checkbox" style="width:auto" data-sel="${esc(c)}" ${sel.has(c)?'checked':''}></td><td><b>${esc(c)}</b></td><td><span class="tag ${f[0]==='A'?'a':''}">${f[0]==='A'?'Assembly':'Part'}</span></td><td>${f[1]?'<span class="ok">✓ .slddrw</span>':'<span class="mt">—</span>'}</td><td>${pdfLink(c)}</td><td>${htmlLink(c)}</td><td><input data-c="${esc(c)}" data-k="mat" value="${esc(G(c).mat)}" placeholder="Material"></td><td class="n"><input class="n" type="number" min="0" step="any" data-c="${esc(c)}" data-k="cost" value="${G(c).cost||''}" placeholder="0"></td><td><button class="b" data-add="${esc(c)}">+ PO</button></td></tr>`}).join('');
- vis=l;$('all').checked=l.length>0&&l.every(c=>sel.has(c));updBar();
- $('lc').textContent=l.length+' of '+codes.length+' items · PDFs on Drive for '+Object.keys(PDF).length+' items · HTML for '+Object.keys(HTML).length+' items';
-}
 ['q','fs','ft'].forEach(i=>$(i).oninput=rLib);
 $('lb').onclick=e=>{const c=e.target.dataset.add;if(c){addToPo([c]);e.target.textContent='Added ✓';setTimeout(()=>{e.target.textContent='+ PO'},1200)}};
 $('lb').onchange=e=>{const c=e.target.dataset.sel;if(c){e.target.checked?sel.add(c):sel.delete(c);$('all').checked=vis.length>0&&vis.every(x=>sel.has(x));updBar()}};
