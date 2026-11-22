@@ -1,10 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Vanya Living - Product Manager</title>
+
+  <!-- jsPDF for Sales Order PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Vanya PDF branding assets (logo + stamp base64) -->
+  <script src="vanya-pdf-assets.js"></script>
+
   <style>
     /* ── Fonts ── */
     @font-face {
@@ -39,9 +45,7 @@
       padding: 0;
     }
 
-    html {
-      scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--ink);
@@ -95,14 +99,52 @@
       gap: 6px;
     }
 
-    nav .nav-links a:hover {
-      color: var(--caramel);
-    }
+    nav .nav-links a:hover { color: var(--caramel); }
 
     .nav-title {
       font: 400 clamp(18px, 2vw, 24px)/1 var(--serif);
       color: var(--caramel);
     }
+
+    /* ── TAB BAR ── */
+    .pm-tabs-bar {
+      display: flex;
+      gap: 0;
+      background: rgba(45, 46, 28, 0.85);
+      border-bottom: 1px solid rgba(204, 169, 117, 0.15);
+      padding: 0 clamp(16px, 4vw, 48px);
+      position: sticky;
+      top: 73px;
+      z-index: 90;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .pm-tab {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--lichen);
+      cursor: pointer;
+      font: 14px var(--sans);
+      letter-spacing: .05em;
+      padding: 14px 24px 11px;
+      transition: color .2s, border-color .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .pm-tab:hover { color: var(--cream); }
+    .pm-tab.active {
+      color: var(--caramel);
+      border-bottom-color: var(--caramel);
+    }
+
+    /* ── SEGMENTS ── */
+    .pm-segment { display: none; }
+    .pm-segment.on { display: block; }
 
     /* ── PAGE LAYOUT ── */
     .page {
@@ -146,9 +188,7 @@
       gap: 6px;
     }
 
-    .field.full {
-      grid-column: 1 / -1;
-    }
+    .field.full { grid-column: 1 / -1; }
 
     label {
       font: 12px var(--sans);
@@ -279,14 +319,8 @@
       white-space: nowrap;
     }
 
-    .btn:hover {
-      background: #d4b080;
-      transform: translateY(-1px);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
+    .btn:hover { background: #d4b080; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
 
     .btn.ghost {
       background: transparent;
@@ -294,9 +328,7 @@
       color: var(--caramel);
     }
 
-    .btn.ghost:hover {
-      background: rgba(204, 169, 117, 0.1);
-    }
+    .btn.ghost:hover { background: rgba(204, 169, 117, 0.1); }
 
     .btn.danger {
       background: transparent;
@@ -304,9 +336,7 @@
       color: #e07060;
     }
 
-    .btn.danger:hover {
-      background: rgba(192, 82, 58, 0.15);
-    }
+    .btn.danger:hover { background: rgba(192, 82, 58, 0.15); }
 
     .btn.sm {
       padding: 8px 18px;
@@ -314,9 +344,7 @@
     }
 
     /* ── PRODUCTS TABLE / GRID ── */
-    .products-section {
-      margin-top: 48px;
-    }
+    .products-section { margin-top: 0; }
 
     .products-toolbar {
       display: flex;
@@ -339,14 +367,8 @@
       transition: border-color var(--transition);
     }
 
-    .search-box:focus {
-      border-color: var(--caramel);
-    }
-
-    .search-box::placeholder {
-      color: var(--lichen);
-      opacity: .6;
-    }
+    .search-box:focus { border-color: var(--caramel); }
+    .search-box::placeholder { color: var(--lichen); opacity: .6; }
 
     .count-badge {
       font: 13px var(--sans);
@@ -403,10 +425,7 @@
       object-fit: cover;
     }
 
-    .prod-info {
-      flex: 1;
-      min-width: 0;
-    }
+    .prod-info { flex: 1; min-width: 0; }
 
     .prod-name {
       font: 400 16px/1.2 var(--serif);
@@ -417,16 +436,8 @@
       text-overflow: ellipsis;
     }
 
-    .prod-material {
-      font: 12px var(--sans);
-      color: var(--lichen);
-      margin-bottom: 4px;
-    }
-
-    .prod-price {
-      font: 400 18px var(--serif);
-      color: var(--caramel);
-    }
+    .prod-material { font: 12px var(--sans); color: var(--lichen); margin-bottom: 4px; }
+    .prod-price { font: 400 18px var(--serif); color: var(--caramel); }
 
     .prod-tags {
       display: flex;
@@ -468,6 +479,7 @@
       gap: 8px;
       padding: 12px 20px;
       border-top: 1px solid rgba(204, 169, 117, 0.1);
+      flex-wrap: wrap;
     }
 
     /* stock badge */
@@ -518,10 +530,7 @@
       border: 1px solid rgba(204, 169, 117, .2);
     }
 
-    .toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
+    .toast.show { transform: translateY(0); opacity: 1; }
 
     /* ── CONFIRM DIALOG ── */
     .confirm-overlay {
@@ -537,10 +546,7 @@
       transition: opacity .2s;
     }
 
-    .confirm-overlay.open {
-      opacity: 1;
-      pointer-events: all;
-    }
+    .confirm-overlay.open { opacity: 1; pointer-events: all; }
 
     .confirm-box {
       background: var(--card-bg);
@@ -554,9 +560,7 @@
       transition: transform .2s;
     }
 
-    .confirm-overlay.open .confirm-box {
-      transform: scale(1);
-    }
+    .confirm-overlay.open .confirm-box { transform: scale(1); }
 
     .confirm-box p {
       font: 15px/1.6 var(--sans);
@@ -587,270 +591,98 @@
       opacity: .8;
     }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 600px) {
-      .btn-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .btn-row .btn {
-        justify-content: center;
-      }
-
-      .products-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .search-box {
-        width: 100%;
-      }
-    }
-    /* ── 3-Segment Tab Navigation ── */
-    .pm-tabs-bar {
-      position: sticky;
-      top: 61px;
-      z-index: 90;
-      background: rgba(35, 37, 23, 0.96);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-bottom: 1px solid rgba(204, 169, 117, 0.2);
-      padding: 0 clamp(20px, 5vw, 60px);
-    }
-
-    .pm-tabs {
-      display: flex;
-      gap: 8px;
-      max-width: 1200px;
-      margin: 0 auto;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .pm-tabs::-webkit-scrollbar { display: none; }
-
-    .pm-tab {
-      background: none;
-      border: none;
-      color: var(--lichen);
-      font: 500 14px var(--sans);
-      padding: 14px 22px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-      border-radius: 8px 8px 0 0;
-    }
-
-    .pm-tab:hover {
-      color: var(--cream);
-      background: rgba(204, 169, 117, 0.06);
-    }
-
-    .pm-tab.on {
-      color: var(--cream);
-      border-bottom-color: var(--caramel);
-      background: rgba(204, 169, 117, 0.12);
-      font-weight: 600;
-    }
-
-    .pm-tab-icon {
-      font-size: 16px;
-    }
-
-    .pm-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(204, 169, 117, 0.25);
-      color: var(--caramel);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 10px;
-    }
-
-    .pm-segment {
-      display: none;
-    }
-
-    .pm-segment.on {
-      display: block;
-      animation: pmFadeIn 0.2s ease;
-    }
-
-    @keyframes pmFadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Sales Order Styles ── */
+    /* ── SALES ORDER STYLES ── */
     .so-card {
       background: var(--card-bg);
       border: 1px solid rgba(204, 169, 117, 0.15);
       border-radius: var(--radius);
-      padding: clamp(18px, 3vw, 30px);
+      padding: clamp(18px, 3vw, 32px);
       margin-bottom: 24px;
     }
 
-    .so-card h3 {
-      font: 400 18px var(--serif);
-      color: var(--caramel);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .so-grid-3 {
+    .so-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 16px;
-      margin-bottom: 14px;
-    }
-
-    .so-grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
-      margin-bottom: 14px;
-    }
-
-    .so-table-wrap {
-      width: 100%;
-      overflow-x: auto;
-      border-radius: 12px;
-      border: 1px solid rgba(204, 169, 117, 0.18);
-      background: rgba(0, 0, 0, 0.2);
-      margin-top: 12px;
+      margin-bottom: 20px;
     }
 
     .so-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
-      min-width: 760px;
-    }
-
-    .so-table th,
-    .so-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(204, 169, 117, 0.12);
-      text-align: left;
+      font: 13px var(--sans);
+      margin-bottom: 16px;
     }
 
     .so-table th {
-      background: rgba(45, 46, 28, 0.85);
+      background: rgba(204, 169, 117, 0.12);
       color: var(--caramel);
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      font-size: 11.5px;
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: .05em;
       text-transform: uppercase;
+      border-bottom: 1px solid rgba(204, 169, 117, 0.2);
     }
 
-    .so-table th.n,
-    .so-table td.n {
-      text-align: right;
-    }
-
-    .so-table input,
-    .so-table select,
-    .so-table textarea {
-      background: rgba(255, 253, 240, 0.06);
-      border: 1px solid rgba(204, 169, 117, 0.25);
-      border-radius: 8px;
+    .so-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(255, 253, 240, 0.06);
       color: var(--cream);
-      padding: 6px 10px;
+      vertical-align: middle;
+    }
+
+    .so-table td input,
+    .so-table td select {
+      background: rgba(255, 253, 240, 0.07);
+      border: 1px solid rgba(204, 169, 117, 0.2);
+      border-radius: 7px;
+      color: var(--cream);
       font: 13px var(--sans);
+      padding: 6px 10px;
       width: 100%;
     }
 
-    .so-table input:focus,
-    .so-table select:focus,
-    .so-table textarea:focus {
+    .so-table td input:focus,
+    .so-table td select:focus {
       border-color: var(--caramel);
       outline: none;
     }
 
-    .so-table input.n {
-      text-align: right;
-    }
-
-    .so-totals {
+    .so-summary {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 8px;
-      margin-top: 16px;
-      font-size: 14px;
+      gap: 6px;
+      padding: 10px 0;
     }
 
-    .so-totals-row {
+    .so-summary-row {
       display: flex;
-      justify-content: space-between;
-      min-width: 280px;
-      padding: 4px 0;
+      gap: 20px;
+      font: 13px var(--sans);
       color: var(--lichen);
     }
 
-    .so-totals-row.grand {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--cream);
-      border-top: 1.5px solid rgba(204, 169, 117, 0.3);
-      padding-top: 10px;
+    .so-summary-row.total {
+      font: 600 16px var(--sans);
+      color: var(--caramel);
+      border-top: 1px solid rgba(204, 169, 117, 0.2);
+      padding-top: 8px;
+      margin-top: 4px;
     }
 
-    /* Live Preview Sheet */
-    .so-sheet {
-      background: #faf8f2;
-      color: #1a1a1a;
-      border-radius: 14px;
-      padding: clamp(20px, 4vw, 40px);
-      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
-      margin-top: 24px;
-      border: 1px solid rgba(204, 169, 117, 0.35);
-      font-family: var(--sans);
-    }
+    .so-summary-row span:last-child { min-width: 100px; text-align: right; }
 
-    .so-sheet h2 {
-      color: #1a1a1a;
-      font: 400 24px var(--serif);
-      margin-bottom: 4px;
-    }
-
-    .so-sheet-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      font-size: 13px;
-    }
-
-    .so-sheet-table th {
-      background: #eae6db;
-      color: #2d2e1c;
-      padding: 8px 10px;
-      border-bottom: 1.5px solid #ccc;
-      text-align: left;
-      font-weight: 600;
-    }
-
-    .so-sheet-table td {
-      padding: 8px 10px;
-      border-bottom: 1px solid #e0ded6;
-      color: #222;
-    }
-
-    .so-sheet-table th.n,
-    .so-sheet-table td.n {
-      text-align: right;
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .btn-row { flex-direction: column; align-items: stretch; }
+      .btn-row .btn { justify-content: center; }
+      .products-toolbar { flex-direction: column; align-items: stretch; }
+      .search-box { width: 100%; }
+      .pm-tab { padding: 12px 14px 9px; font-size: 12px; }
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="vanya-pdf-assets.js"></script>
 </head>
 
 <body>
@@ -873,453 +705,382 @@
     </div>
   </nav>
 
-  <div class="page">
+  <!-- TAB BAR -->
+  <div class="pm-tabs-bar">
+    <button class="pm-tab active" id="tab-dashboard" onclick="goSeg('dashboard')">
+      &#128202; Dashboard
+    </button>
+    <button class="pm-tab" id="tab-product" onclick="goSeg('product')">
+      &#43; Add New Product
+    </button>
+    <button class="pm-tab" id="tab-salesorder" onclick="goSeg('salesorder')">
+      &#128209; Sales Order
+    </button>
+  </div>
 
-    <!-- SEGMENT 1: DASHBOARD (Active by default) -->
-    <div class="pm-segment on" id="seg-dashboard">
-<!-- PRODUCT LIST -->
-  <section class="products-section">
-    <div class="products-toolbar">
-      <h2 style="margin-bottom:0">Live Products on Site</h2>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input type="text" class="search-box" id="searchBox" placeholder="Search products…" oninput="renderProducts()">
-        <span class="count-badge" id="countBadge">0 products</span>
-        <button type="button" class="btn sm" onclick="goSeg('product')">+ Add New Product</button>
-        <button type="button" class="btn sm ghost" onclick="goSeg('salesorder')" style="color:var(--caramel);">📑 View Sales Order</button>
+  <!-- SEGMENT: DASHBOARD -->
+  <div class="pm-segment on" id="seg-dashboard">
+    <div class="page">
+      <section class="products-section">
+        <div class="products-toolbar">
+          <h2 style="margin-bottom:0">Live Products on Site</h2>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <input type="text" class="search-box" id="searchBox" placeholder="Search products..." oninput="renderProducts()">
+            <span class="count-badge" id="countBadge">0 products</span>
+            <button class="btn sm" onclick="goSeg('product')">&#43; Add New Product</button>
+            <button class="btn sm ghost" onclick="goSeg('salesorder')">&#128209; Sales Order</button>
+          </div>
+        </div>
+        <div class="prod-grid" id="prodGrid"></div>
+      </section>
     </div>
+  </div>
 
-    <!-- SEGMENT 2: ADD NEW PRODUCT -->
-    <div class="pm-segment" id="seg-product">
-<!-- ADD / EDIT FORM -->
-    <section class="form-card">
-      <h2 id="formTitle">Add New Product</h2>
+  <!-- SEGMENT: ADD / EDIT PRODUCT -->
+  <div class="pm-segment" id="seg-product">
+    <div class="page">
+      <section class="form-card">
+        <h2 id="formTitle">Add New Product</h2>
 
-      <div class="form-grid">
-        <div class="field">
-          <label for="f-name">Product Name *</label>
-          <input type="text" id="f-name" placeholder="e.g. Arjun Teak Lounge Chair" required>
-        </div>
-        <div class="field">
-          <label for="f-code">Product Code *</label>
-          <input type="text" id="f-code" placeholder="e.g. VL-CH01" required>
-        </div>
-        <div class="field">
-          <label for="f-material">Material / Origin</label>
-          <input type="text" id="f-material" placeholder="e.g. Reclaimed teak, Rajasthan">
-        </div>
-        <div class="field">
-          <label for="f-price">Price (₹) *</label>
-          <input type="number" id="f-price" placeholder="e.g. 48000" min="0" required>
-        </div>
-        <div class="field">
-          <label for="f-category">Category (Editable / Custom)</label>
-          <input type="text" id="f-category" list="category-suggestions" placeholder="Type or select category (e.g. Seating, Dining, Decor)...">
-          <datalist id="category-suggestions">
-            <option value="Seating">
-            <option value="Tables">
-            <option value="Storage">
-            <option value="Beds">
-            <option value="Dining">
-            <option value="Living Room">
-            <option value="Lighting">
-            <option value="Accessories">
-            <option value="Outdoor">
-            <option value="Decor">
-          </datalist>
-        </div>
-        <div class="field">
-          <label for="f-badge">Badge (optional)</label>
-          <input type="text" id="f-badge" placeholder="e.g. New, Bestseller, Limited">
-        </div>
-        <div class="field">
-          <label for="f-hsn">HSN Code</label>
-          <input type="text" id="f-hsn" placeholder="e.g. 94036000">
-        </div>
-        <div class="field">
-          <label for="f-dimensions">Dimensions (L×W×H cm)</label>
-          <input type="text" id="f-dimensions" placeholder="e.g. 80×60×75 cm">
-        </div>
-        <div class="field">
-          <label for="f-weight">Weight (kg)</label>
-          <input type="number" id="f-weight" placeholder="e.g. 18" min="0" step="0.1">
-        </div>
-        <div class="field">
-          <label for="f-color">Card Accent Color (Fallback)</label>
-          <input type="color" id="f-color" value="#CCA975">
-        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="f-name">Product Name *</label>
+            <input type="text" id="f-name" placeholder="e.g. Arjun Teak Lounge Chair" required>
+          </div>
+          <div class="field">
+            <label for="f-code">Product Code *</label>
+            <input type="text" id="f-code" placeholder="e.g. VL-CH01" required>
+          </div>
+          <div class="field">
+            <label for="f-material">Material / Origin</label>
+            <input type="text" id="f-material" placeholder="e.g. Reclaimed teak, Rajasthan">
+          </div>
+          <div class="field">
+            <label for="f-price">Price (Rs.) *</label>
+            <input type="number" id="f-price" placeholder="e.g. 48000" min="0" required>
+          </div>
+          <div class="field">
+            <label for="f-category">Category (Editable / Custom)</label>
+            <input type="text" id="f-category" list="category-suggestions" placeholder="Type or select category...">
+            <datalist id="category-suggestions">
+              <option value="Seating">
+              <option value="Tables">
+              <option value="Storage">
+              <option value="Beds">
+              <option value="Dining">
+              <option value="Living Room">
+              <option value="Lighting">
+              <option value="Accessories">
+              <option value="Outdoor">
+              <option value="Decor">
+            </datalist>
+          </div>
+          <div class="field">
+            <label for="f-badge">Badge (optional)</label>
+            <input type="text" id="f-badge" placeholder="e.g. New, Bestseller, Limited">
+          </div>
+          <div class="field">
+            <label for="f-hsn">HSN Code</label>
+            <input type="text" id="f-hsn" placeholder="e.g. 94036000">
+          </div>
+          <div class="field">
+            <label for="f-dimensions">Dimensions (L x W x H cm)</label>
+            <input type="text" id="f-dimensions" placeholder="e.g. 80x60x75 cm">
+          </div>
+          <div class="field">
+            <label for="f-weight">Weight (kg)</label>
+            <input type="number" id="f-weight" placeholder="e.g. 18" min="0" step="0.1">
+          </div>
+          <div class="field">
+            <label for="f-color">Card Accent Color (Fallback)</label>
+            <input type="color" id="f-color" value="#CCA975">
+          </div>
 
-        <!-- Image field -->
-        <div class="field full">
-          <label>Product Images (Upload Photos or Add Link)</label>
-          <div
-            style="background: rgba(255, 253, 240, 0.04); border: 1px solid rgba(204, 169, 117, 0.2); border-radius: 12px; padding: 16px;">
-            <!-- Upload First -->
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
-              <label for="f-image-files" class="btn sm ghost"
-                style="cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:6px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-                <span>📁 Upload Photos</span>
-              </label>
-              <input type="file" id="f-image-files" accept="image/*" multiple style="display:none"
-                onchange="handleMultipleImageFiles(event)">
-              <span style="font-size:12px; color:var(--lichen);">Upload one or multiple photos from your device</span>
-            </div>
-
-            <!-- Preview Gallery -->
-            <div class="multi-img-gallery" id="multiImgGallery"
-              style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; min-height:80px; padding:10px; background:rgba(0,0,0,0.25); border-radius:10px; border:1px dashed rgba(204,169,117,0.3); align-items:center;">
-              <span style="font-size:13px; color:var(--lichen); opacity:0.6; padding:8px;" id="noImgNotice">No images
-                added yet. Upload files above or add a link below.</span>
-            </div>
-
-            <!-- Link File & 3D HTML View Upload -->
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <input type="text" id="f-image-url" placeholder="Enter image URL or link to 3D HTML file" style="flex:1; min-width:220px;"
-                  onkeydown="if(event.key==='Enter'){event.preventDefault();addImageFromUrl();}">
-                <button type="button" class="btn sm" onclick="addImageFromUrl(false)" title="Add as standard photo or auto-detect 3D">Add Link</button>
-                
-                <!-- 3D HTML File Upload from Device -->
-                <input type="file" id="f-3d-file" accept=".html,.htm" style="display:none;" onchange="handle3DFileUpload(event)">
-                <button type="button" class="btn sm" id="btn3dUpload" onclick="document.getElementById('f-3d-file').click()" style="background:rgba(204,169,117,0.25); border:1.5px solid var(--caramel); color:var(--cream); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Choose an interactive 3D HTML file from your device">
-                  <span>🧊 Add 3D HTML View</span>
-                </button>
+          <!-- Image field -->
+          <div class="field full">
+            <label>Product Images (Upload Photos or Add Link)</label>
+            <div style="background: rgba(255, 253, 240, 0.04); border: 1px solid rgba(204, 169, 117, 0.2); border-radius: 12px; padding: 16px;">
+              <!-- Upload First -->
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
+                <label for="f-image-files" class="btn sm ghost"
+                  style="cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:6px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span>Upload Photos</span>
+                </label>
+                <input type="file" id="f-image-files" accept="image/*" multiple style="display:none"
+                  onchange="handleMultipleImageFiles(event)">
+                <span style="font-size:12px; color:var(--lichen);">Upload one or multiple photos from your device</span>
               </div>
-              <span style="font-size:11px; color:var(--lichen); opacity:0.85;">💡 Click <strong>"🧊 Add 3D HTML View"</strong> to choose any 3D <code>.html</code> file from your device. It gets saved directly to the database for this product and renders interactively as the <strong>Last Slide</strong>.</span>
+
+              <!-- Preview Gallery -->
+              <div class="multi-img-gallery" id="multiImgGallery"
+                style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; min-height:80px; padding:10px; background:rgba(0,0,0,0.25); border-radius:10px; border:1px dashed rgba(204,169,117,0.3); align-items:center;">
+                <span style="font-size:13px; color:var(--lichen); opacity:0.6; padding:8px;" id="noImgNotice">No images
+                  added yet. Upload files above or add a link below.</span>
+              </div>
+
+              <!-- Link File and 3D HTML View Upload -->
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                  <input type="text" id="f-image-url" placeholder="Enter image URL or link to 3D HTML file" style="flex:1; min-width:220px;"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();addImageFromUrl();}">
+                  <button type="button" class="btn sm" onclick="addImageFromUrl(false)" title="Add as standard photo or auto-detect 3D">Add Link</button>
+
+                  <!-- 3D HTML File Upload from Device -->
+                  <input type="file" id="f-3d-file" accept=".html,.htm" style="display:none;" onchange="handle3DFileUpload(event)">
+                  <button type="button" class="btn sm" id="btn3dUpload" onclick="document.getElementById('f-3d-file').click()" style="background:rgba(204,169,117,0.25); border:1.5px solid var(--caramel); color:var(--cream); display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Choose an interactive 3D HTML file from your device">
+                    <span>&#129290; Add 3D HTML View</span>
+                  </button>
+                </div>
+                <span style="font-size:11px; color:var(--lichen); opacity:0.85;">Click <strong>"&#129290; Add 3D HTML View"</strong> to choose any 3D .html file from your device. It gets saved directly to the database for this product and renders interactively as the <strong>Last Slide</strong>.</span>
+              </div>
             </div>
+          </div>
+
+          <div class="field full">
+            <label for="f-desc">Description</label>
+            <textarea id="f-desc"
+              placeholder="Describe the piece — its craftsmanship, natural grain, origin, and soul..."></textarea>
+          </div>
+          <div class="field full">
+            <label for="f-care">Care Instructions</label>
+            <textarea id="f-care"
+              placeholder="e.g. Wipe with soft lint-free cloth. Nourish every 6 months with natural beeswax..."
+              style="min-height:60px"></textarea>
           </div>
         </div>
 
-        <div class="field full">
-          <label for="f-desc">Description</label>
-          <textarea id="f-desc"
-            placeholder="Describe the piece — its craftsmanship, natural grain, origin, and soul..."></textarea>
+        <div class="check-row" style="margin-bottom:20px">
+          <input type="checkbox" id="f-instock" checked>
+          <label for="f-instock">In Stock (Visible in Storefront)</label>
         </div>
-        <div class="field full">
-          <label for="f-care">Care Instructions</label>
-          <textarea id="f-care"
-            placeholder="e.g. Wipe with soft lint-free cloth. Nourish every 6 months with natural beeswax..."
-            style="min-height:60px"></textarea>
-        </div>
-      </div>
 
-      <div class="check-row" style="margin-bottom:20px">
-        <input type="checkbox" id="f-instock" checked>
-        <label for="f-instock">In Stock (Visible in Storefront)</label>
-      </div>
-
-      <div class="btn-row">
-        <button type="button" class="btn" id="saveBtn" onclick="saveProduct()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-            <polyline points="17 21 17 13 7 13 7 21" />
-            <polyline points="7 3 7 8 15 8" />
-          </svg>
-          Save Product
-        </button>
-        <button type="button" class="btn ghost" onclick="resetForm()">Clear Form</button>
-        <button type="button" class="btn ghost danger" id="btnCancelEdit" style="display:none;" onclick="cancelEdit()">✕ Cancel Edit</button>
-        <a class="btn ghost" href="index.html" target="_blank">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-            <polyline points="15 3 21 3 21 9" />
-            <line x1="10" y1="14" x2="21" y2="3" />
-          </svg>
-          Open Store
-        </a>
-        <button type="button" class="btn ghost" onclick="seedSampleProducts()" style="margin-left:auto;">
-          Load Sample Products
-        </button>
-      </div>
-    </section>
-    </div>
-
-    <!-- SEGMENT 3: SALES ORDER -->
-    <div class="pm-segment" id="seg-salesorder">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
-        <div>
-          <h2 style="margin-bottom:4px;">📑 Sales Order</h2>
-          <p style="font-size:13px; color:var(--lichen);">Create and print customized Sales Orders with live products from your catalog. Stored locally only — not saved to remote database.</p>
-        </div>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-          <button type="button" class="btn" onclick="printSalesOrderPdf()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>⬇ Download Sales Order PDF</span>
+        <div class="btn-row">
+          <button type="button" class="btn" id="saveBtn" onclick="saveProduct()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Save Product
           </button>
-          <button type="button" class="btn ghost danger" onclick="resetSalesOrder()">⟳ Reset Order</button>
+          <button type="button" class="btn ghost" onclick="resetForm()">Clear Form</button>
+          <button type="button" class="btn ghost" id="cancelEditBtn" onclick="cancelEdit()" style="display:none; border-color:#c0523a; color:#e07060;">Cancel Edit</button>
+          <a class="btn ghost" href="index.html" target="_blank">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            Open Store
+          </a>
+          <button type="button" class="btn ghost" onclick="seedSampleProducts()" style="margin-left:auto;">
+            Load Sample Products
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- SEGMENT: SALES ORDER -->
+  <div class="pm-segment" id="seg-salesorder">
+    <div class="page">
+
+      <!-- Header Row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h2 style="margin-bottom:8px">Sales Order</h2>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label style="font:12px var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--lichen);margin:0;">SO Number</label>
+            <input type="text" id="soNumber" placeholder="Auto-generated" oninput="soData.soNumber=this.value.trim();saveSoData();"
+              style="font:600 14px var(--sans);color:var(--caramel);background:rgba(204,169,117,0.1);border:1.5px solid rgba(204,169,117,0.35);border-radius:8px;padding:6px 14px;width:220px;outline:none;">
+            <button class="btn sm ghost" onclick="(function(){var n=generateSoNumber();document.getElementById('soNumber').value=n;soData.soNumber=n;saveSoData();})()">&#8635; Regenerate</button>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="printSalesOrderPdf()">&#128438; Download PDF</button>
+          <button class="btn ghost" onclick="resetSalesOrder()">&#128260; New Order</button>
         </div>
       </div>
 
-      <!-- Order & Customer Details -->
+      <!-- Customer Details -->
       <div class="so-card">
-        <h3><span>📋</span> Order &amp; Customer Information</h3>
-        <div class="so-grid-3">
+        <h3>Customer Details</h3>
+        <div class="so-grid">
           <div class="field">
-            <label for="so_no">Sales Order #</label>
-            <div style="display:flex; gap:6px;">
-              <input type="text" id="so_no" placeholder="SO-20261122-001">
-              <button type="button" class="btn sm ghost" onclick="generateSoNumber()" style="white-space:nowrap;">Generate</button>
-            </div>
+            <label>Customer Name *</label>
+            <input type="text" id="so-cust-name" placeholder="Full name" oninput="syncSoDataFromInputs()">
           </div>
           <div class="field">
-            <label for="so_date">Order Date</label>
-            <input type="date" id="so_date">
+            <label>Company / Firm</label>
+            <input type="text" id="so-cust-firm" placeholder="Company name (optional)" oninput="syncSoDataFromInputs()">
           </div>
           <div class="field">
-            <label for="so_delivery">Delivery / Dispatch Date</label>
-            <input type="date" id="so_delivery">
+            <label>GSTIN</label>
+            <input type="text" id="so-cust-gstin" placeholder="GST number (optional)" oninput="syncSoDataFromInputs()">
           </div>
           <div class="field">
-            <label for="so_rep">Sales Representative</label>
-            <input type="text" id="so_rep" placeholder="e.g. Yash / Vanya Living Sales">
+            <label>Contact Number</label>
+            <input type="text" id="so-cust-phone" placeholder="10-digit mobile" oninput="syncSoDataFromInputs()">
           </div>
           <div class="field">
-            <label for="so_cname">Customer / Company Name *</label>
-            <input type="text" id="so_cname" placeholder="e.g. Rohit Mehra / Urban Craft Studio">
+            <label>Email</label>
+            <input type="email" id="so-cust-email" placeholder="customer@email.com" oninput="syncSoDataFromInputs()">
           </div>
           <div class="field">
-            <label for="so_cphone">Customer Contact / Phone *</label>
-            <input type="tel" id="so_cphone" placeholder="e.g. 9884208336">
-          </div>
-          <div class="field">
-            <label for="so_cemail">Customer Email</label>
-            <input type="email" id="so_cemail" placeholder="e.g. customer@example.com">
-          </div>
-          <div class="field">
-            <label for="so_cgst">Customer GSTIN</label>
-            <input type="text" id="so_cgst" placeholder="e.g. 08AAAAA0000A1Z5">
-          </div>
-          <div class="field">
-            <label for="so_paymode">Payment Terms Summary</label>
-            <input type="text" id="so_paymode" placeholder="e.g. 50% Advance, 50% Before Dispatch">
+            <label>Order Date</label>
+            <input type="date" id="so-date" oninput="syncSoDataFromInputs()">
           </div>
         </div>
 
-        <div class="so-grid-2" style="margin-top:12px;">
-          <div class="field">
-            <label for="so_baddr">Bill To Address *</label>
-            <textarea id="so_baddr" rows="3" placeholder="Billing address with City, State, Pincode"></textarea>
+        <!-- Billing Address -->
+        <h3 style="margin-top:16px;">Billing Address</h3>
+        <div class="so-grid">
+          <div class="field full">
+            <label>Address Line 1</label>
+            <input type="text" id="so-bill-addr1" placeholder="Building / Street" oninput="syncSoDataFromInputs()">
+          </div>
+          <div class="field full">
+            <label>Address Line 2</label>
+            <input type="text" id="so-bill-addr2" placeholder="Area / Locality" oninput="syncSoDataFromInputs()">
           </div>
           <div class="field">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <label for="so_saddr" style="margin-bottom:0;">Ship To Address *</label>
-              <label style="font-size:12px; color:var(--caramel); display:inline-flex; align-items:center; gap:5px; cursor:pointer; text-transform:none;">
-                <input type="checkbox" id="so_same_addr" onchange="toggleSameAddress(this.checked)" checked style="width:auto;">
-                <span>Same as Billing Address</span>
-              </label>
+            <label>City</label>
+            <input type="text" id="so-bill-city" placeholder="City" oninput="syncSoDataFromInputs()">
+          </div>
+          <div class="field">
+            <label>State</label>
+            <input type="text" id="so-bill-state" placeholder="State" oninput="syncSoDataFromInputs()">
+          </div>
+          <div class="field">
+            <label>PIN Code</label>
+            <input type="text" id="so-bill-pin" placeholder="PIN" oninput="syncSoDataFromInputs()">
+          </div>
+        </div>
+
+        <!-- Shipping Address -->
+        <div style="display:flex;align-items:center;gap:10px;margin:16px 0 12px;">
+          <h3 style="margin-bottom:0;">Shipping Address</h3>
+          <div class="check-row" style="padding:0;">
+            <input type="checkbox" id="so-same-addr" onchange="toggleSameAddress(this.checked)">
+            <label for="so-same-addr" style="text-transform:none;font-size:13px;letter-spacing:0;">Same as Billing</label>
+          </div>
+        </div>
+        <div id="so-ship-fields">
+          <div class="so-grid">
+            <div class="field full">
+              <label>Address Line 1</label>
+              <input type="text" id="so-ship-addr1" placeholder="Building / Street" oninput="syncSoDataFromInputs()">
             </div>
-            <textarea id="so_saddr" rows="3" placeholder="Shipping / Site address with City, State, Pincode"></textarea>
+            <div class="field full">
+              <label>Address Line 2</label>
+              <input type="text" id="so-ship-addr2" placeholder="Area / Locality" oninput="syncSoDataFromInputs()">
+            </div>
+            <div class="field">
+              <label>City</label>
+              <input type="text" id="so-ship-city" placeholder="City" oninput="syncSoDataFromInputs()">
+            </div>
+            <div class="field">
+              <label>State</label>
+              <input type="text" id="so-ship-state" placeholder="State" oninput="syncSoDataFromInputs()">
+            </div>
+            <div class="field">
+              <label>PIN Code</label>
+              <input type="text" id="so-ship-pin" placeholder="PIN" oninput="syncSoDataFromInputs()">
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Line Items Section -->
+      <!-- Order Lines -->
       <div class="so-card">
-        <h3><span>🪑</span> Products &amp; Line Items</h3>
-        
-        <!-- Quick Selector from Dashboard -->
-        <div style="background:rgba(255,253,240,0.04); border:1px solid rgba(204,169,117,0.2); border-radius:12px; padding:16px; margin-bottom:16px;">
-          <label style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--caramel); margin-bottom:8px; display:block;">Quick-Select Product from Dashboard</label>
-          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <select id="so_dash_prod" style="flex:1; min-width:240px; background:rgba(0,0,0,0.3); color:var(--cream); border:1px solid rgba(204,169,117,0.3); border-radius:8px; padding:8px 12px; font:14px var(--sans);">
-              <option value="">— Select a live product from dashboard —</option>
-            </select>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:12px; color:var(--lichen);">Qty:</span>
-              <input type="number" id="so_dash_qty" value="1" min="1" style="width:75px; background:rgba(0,0,0,0.3); color:var(--cream); border:1px solid rgba(204,169,117,0.3); border-radius:8px; padding:8px; text-align:center;">
-            </div>
-            <button type="button" class="btn sm" onclick="addSelectedDashboardProduct()">+ Add to Order</button>
-            <button type="button" class="btn sm ghost" onclick="addBlankSoLine()">+ Add Custom Line</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <h3 style="margin-bottom:0;">Order Items <span id="soLineCount" style="font:13px var(--sans);color:var(--lichen);">(0 items)</span></h3>
+          <div class="btn-row">
+            <button class="btn sm" onclick="addBlankSoLine()">+ Add Line</button>
+            <button class="btn sm ghost" onclick="clearSoLines()">Clear Lines</button>
           </div>
         </div>
 
-        <!-- Table -->
-        <div class="so-table-wrap">
+        <!-- Quick add from Dashboard -->
+        <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <label style="text-transform:none;font-size:13px;color:var(--lichen);">Quick Add from Dashboard:</label>
+          <select id="soDashProductSelect" style="max-width:280px;">
+            <option value="">-- Select a product --</option>
+          </select>
+          <button class="btn sm" onclick="addSelectedDashboardProduct()">Add to Order</button>
+        </div>
+
+        <div style="overflow-x:auto;">
           <table class="so-table">
             <thead>
               <tr>
-                <th style="width:40px;">#</th>
-                <th style="width:130px;">Product Code</th>
-                <th>Description / Material</th>
-                <th style="width:100px;">HSN</th>
-                <th class="n" style="width:85px;">Qty</th>
-                <th class="n" style="width:130px;">Unit Rate (₹)</th>
-                <th class="n" style="width:140px;">Amount (₹)</th>
-                <th style="width:50px;"></th>
+                <th style="width:36px;">#</th>
+                <th>Product / Description</th>
+                <th>Code</th>
+                <th style="width:80px;">HSN</th>
+                <th style="width:70px;">Qty</th>
+                <th style="width:110px;">Unit Price (Rs.)</th>
+                <th style="width:120px;">Amount (Rs.)</th>
+                <th style="width:36px;"></th>
               </tr>
             </thead>
-            <tbody id="so_tbody">
-              <!-- Rendered lines -->
-            </tbody>
+            <tbody id="soLinesBody"></tbody>
           </table>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:16px; flex-wrap:wrap; gap:16px;">
-          <div style="display:flex; gap:10px;">
-            <button type="button" class="btn sm ghost" onclick="addBlankSoLine()">+ Add Blank Line</button>
-            <button type="button" class="btn sm ghost danger" onclick="clearSoLines()">Clear Lines</button>
+        <!-- Totals -->
+        <div class="so-summary" id="soSummary">
+          <div class="so-summary-row"><span>Subtotal</span><span id="soSubtotal">Rs. 0</span></div>
+          <div class="so-summary-row">
+            <span>Discount</span>
+            <span>Rs. <input type="number" id="so-discount" value="0" min="0" style="width:80px;display:inline-block;" oninput="updateSoLinesCount()"></span>
           </div>
-
-          <!-- Totals -->
-          <div class="so-totals">
-            <div class="so-totals-row">
-              <span>Subtotal:</span>
-              <strong id="so_subtotal" style="color:var(--cream);">₹0.00</strong>
-            </div>
-            <div class="so-totals-row" style="align-items:center; gap:8px;">
-              <span>GST:</span>
-              <div style="display:flex; align-items:center; gap:4px;">
-                <input type="number" id="so_gst_pct" value="18" min="0" max="28" style="width:55px; text-align:center; padding:3px 6px; font-size:12px;">
-                <span>%</span>
-              </div>
-              <strong id="so_gst_amt" style="color:var(--cream); min-width:90px; text-align:right;">₹0.00</strong>
-            </div>
-            <div class="so-totals-row grand">
-              <span>Total Amount:</span>
-              <span id="so_grand_total" style="color:var(--caramel);">₹0.00</span>
-            </div>
+          <div class="so-summary-row">
+            <span>GST %</span>
+            <span><input type="number" id="so-gst-pct" value="18" min="0" max="100" step="0.5" style="width:60px;display:inline-block;" oninput="updateSoLinesCount()"> %</span>
           </div>
+          <div class="so-summary-row total"><span>Grand Total</span><span id="soGrandTotal">Rs. 0</span></div>
         </div>
       </div>
 
-      <!-- Terms & Notes -->
+      <!-- Notes -->
       <div class="so-card">
-        <h3><span>📜</span> Sales Terms, Delivery &amp; Notes</h3>
-        <div class="so-grid-2">
-          <div class="field">
-            <label for="so_ptm">Payment Terms</label>
-            <textarea id="so_ptm" rows="3"></textarea>
+        <h3>Terms &amp; Notes</h3>
+        <div class="so-grid">
+          <div class="field full">
+            <label>Notes / Remarks</label>
+            <textarea id="so-notes" placeholder="Delivery timeline, special instructions, payment terms..." style="min-height:80px;" oninput="syncSoDataFromInputs()"></textarea>
           </div>
           <div class="field">
-            <label for="so_dlm">Delivery &amp; Freight Terms</label>
-            <textarea id="so_dlm" rows="3"></textarea>
+            <label>Payment Terms</label>
+            <input type="text" id="so-pay-terms" placeholder="e.g. 50% advance, 50% before dispatch" oninput="syncSoDataFromInputs()">
           </div>
           <div class="field">
-            <label for="so_wrm">Warranty &amp; Craftsmanship Policy</label>
-            <textarea id="so_wrm" rows="2"></textarea>
-          </div>
-          <div class="field">
-            <label for="so_rem">Special Remarks / Client Customizations</label>
-            <textarea id="so_rem" rows="2" placeholder="Finishing notes, custom dimensions, packing instructions..."></textarea>
-          </div>
-        </div>
-
-        <div class="so-grid-3" style="margin-top:12px;">
-          <div class="field">
-            <label for="so_og">Vanya Living GSTIN</label>
-            <input type="text" id="so_og" value="Not Applicable">
-          </div>
-          <div class="field">
-            <label for="so_oc">Company Contact</label>
-            <input type="text" id="so_oc" value="9884208336">
-          </div>
-          <div class="field">
-            <label for="so_as">Authorized Signatory</label>
-            <input type="text" id="so_as" value="Vanya Living Sales Team">
+            <label>Delivery Lead Time</label>
+            <input type="text" id="so-lead-time" placeholder="e.g. 4-6 weeks from order" oninput="syncSoDataFromInputs()">
           </div>
         </div>
       </div>
 
-      <!-- Live Preview Sheet -->
-      <div class="so-sheet" id="soPreviewSheet">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #2d2e1c; padding-bottom:14px; margin-bottom:16px;">
-          <div>
-            <h2 style="font-size:26px; font-weight:700; color:#2d2e1c; letter-spacing:0.5px; margin:0;">SALES ORDER</h2>
-            <div style="font-size:13px; color:#666; margin-top:4px;">
-              <span id="so_prev_no" style="font-weight:700; color:#2d2e1c;">#SO-</span> &nbsp;·&nbsp;
-              Date: <span id="so_prev_date">—</span> &nbsp;·&nbsp;
-              Delivery: <span id="so_prev_del">—</span>
-            </div>
-            <div style="font-size:12px; color:#777; margin-top:2px;">Representative: <span id="so_prev_rep">—</span></div>
-          </div>
-          <div style="text-align:right;">
-            <img src="assets/vanya.logo.png" alt="Vanya Living" style="height:46px; object-fit:contain; display:block; margin-left:auto;">
-            <div style="font-size:11px; color:#666; margin-top:4px;">Handcrafted Heritage Furniture</div>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:18px; font-size:12.5px; line-height:1.5;">
-          <div style="background:#f1ede2; padding:12px 14px; border-radius:8px;">
-            <strong style="color:#2d2e1c; font-size:13px; display:block; margin-bottom:4px;">Bill To:</strong>
-            <div id="so_prev_cname" style="font-weight:600; color:#1a1a1a;">—</div>
-            <div id="so_prev_cphone" style="color:#444;">—</div>
-            <div id="so_prev_cemail" style="color:#444;">—</div>
-            <div id="so_prev_cgst" style="color:#444;">—</div>
-            <div id="so_prev_baddr" style="white-space:pre-line; margin-top:4px; color:#555;">—</div>
-          </div>
-          <div style="background:#f1ede2; padding:12px 14px; border-radius:8px;">
-            <strong style="color:#2d2e1c; font-size:13px; display:block; margin-bottom:4px;">Ship To / Delivery Site:</strong>
-            <div id="so_prev_sname" style="font-weight:600; color:#1a1a1a;">—</div>
-            <div id="so_prev_saddr" style="white-space:pre-line; color:#555;">—</div>
-          </div>
-        </div>
-
-        <table class="so-sheet-table">
-          <thead>
-            <tr>
-              <th style="width:36px;">#</th>
-              <th style="width:120px;">Code</th>
-              <th>Item &amp; Description</th>
-              <th style="width:90px;">HSN</th>
-              <th class="n" style="width:70px;">Qty</th>
-              <th class="n" style="width:110px;">Rate (₹)</th>
-              <th class="n" style="width:120px;">Amount (₹)</th>
-            </tr>
-          </thead>
-          <tbody id="so_prev_tbody">
-            <!-- Preview lines -->
-          </tbody>
-        </table>
-
-        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
-          <div style="min-width:260px; font-size:13px; line-height:1.8;">
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding:4px 0;">
-              <span>Subtotal:</span>
-              <strong id="so_prev_sub">₹0.00</strong>
-            </div>
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding:4px 0;">
-              <span id="so_prev_gst_label">GST (18%):</span>
-              <strong id="so_prev_gst">₹0.00</strong>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700; color:#2d2e1c; padding:6px 0;">
-              <span>Grand Total:</span>
-              <span id="so_prev_tot">₹0.00</span>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top:20px; font-size:11.5px; color:#555; border-top:1px solid #ddd; padding-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-          <div>
-            <strong>Terms &amp; Conditions:</strong>
-            <div id="so_prev_terms" style="white-space:pre-line; margin-top:4px;">—</div>
-          </div>
-          <div style="text-align:right;">
-            <strong>For Vanya Living</strong>
-            <div style="margin-top:24px; font-weight:600; color:#2d2e1c;" id="so_prev_signatory">Authorized Signatory</div>
-            <div style="font-size:10.5px; color:#888;">*Computer generated sales order</div>
-          </div>
-        </div>
+      <!-- Action buttons bottom -->
+      <div class="btn-row" style="margin-top:8px;margin-bottom:40px;">
+        <button class="btn" onclick="printSalesOrderPdf()">&#128438; Download PDF</button>
+        <button class="btn ghost" onclick="resetSalesOrder()">&#128260; New Order</button>
+        <button class="btn ghost" onclick="goSeg('dashboard')">&#8592; Back to Dashboard</button>
       </div>
 
-      <div style="display:flex; gap:12px; margin-top:24px;">
-        <button type="button" class="btn" onclick="printSalesOrderPdf()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>⬇ Download Sales Order PDF</span>
-        </button>
-        <button type="button" class="btn ghost danger" onclick="resetSalesOrder()">⟳ Reset Order</button>
-      </div>
     </div>
-
   </div>
 
-    <!-- FOOTER -->
+  <!-- FOOTER -->
   <footer>
     <img src="assets/vanya.logo.png" alt="Vanya Living" class="footer-logo"><br>
-    <p>© 2026 Vanya Living — Admin & Product Manager</p>
+    <p>&copy; 2026 Vanya Living &mdash; Admin &amp; Product Manager</p>
   </footer>
 
   <!-- TOAST -->
@@ -1345,6 +1106,7 @@
   <script>
     // ── Storage helpers ──
     const STORE_KEY = 'vl_products';
+    const SO_KEY = 'vl_sales_order_v1';
 
     function getProducts() {
       if (window.vl_products && window.vl_products.length > 0) {
@@ -1370,9 +1132,9 @@
       } catch (e) {
         console.error('Failed to save to localStorage:', e);
         if (e.name === 'QuotaExceededError' || e.code === 22) {
-          alert('⚠ Browser storage limit reached. Please remove older items or use image URLs instead of large photo files.');
+          alert('Browser storage limit reached. Please remove older items or use image URLs instead of large photo files.');
         } else {
-          alert('⚠ Error saving product: ' + (e.message || e));
+          alert('Error saving product: ' + (e.message || e));
         }
         return false;
       }
@@ -1381,34 +1143,56 @@
     // ── State ──
     let editingId = null;
 
+    // ── Tab / Segment navigation ──
+    function goSeg(name) {
+      document.querySelectorAll('.pm-segment').forEach(function(el) {
+        el.classList.remove('on');
+      });
+      document.querySelectorAll('.pm-tab').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      var seg = document.getElementById('seg-' + name);
+      if (seg) seg.classList.add('on');
+      var tab = document.getElementById('tab-' + name);
+      if (tab) tab.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (name === 'salesorder') {
+        populateSoProductSelect();
+        updateSoLinesCount();
+      }
+    }
+
     // ── Toast ──
-    function toast(msg, duration = 3000) {
-      const t = document.getElementById('toast');
+    function toast(msg, duration) {
+      duration = duration || 3000;
+      var t = document.getElementById('toast');
       if (!t) return;
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), duration);
+      setTimeout(function() { t.classList.remove('show'); }, duration);
     }
 
     // ── Multiple Image Handling & Compression ──
-    let currentImages = [];
+    var currentImages = [];
 
-    function compressImageFile(file, maxDimension = 960, quality = 0.8) {
-      return new Promise((resolve) => {
+    function compressImageFile(file, maxDimension, quality) {
+      maxDimension = maxDimension || 960;
+      quality = quality || 0.8;
+      return new Promise(function(resolve) {
         if (!file.type || !file.type.startsWith('image/') || file.type === 'image/svg+xml') {
-          const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
-          reader.onerror = () => resolve('');
+          var reader = new FileReader();
+          reader.onload = function(e) { resolve(e.target.result); };
+          reader.onerror = function() { resolve(''); };
           reader.readAsDataURL(file);
           return;
         }
 
-        const reader = new FileReader();
-        reader.onload = e => {
-          const img = new Image();
-          img.onload = () => {
-            let width = img.width;
-            let height = img.height;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var img = new Image();
+          img.onload = function() {
+            var width = img.width;
+            var height = img.height;
 
             if (width > maxDimension || height > maxDimension) {
               if (width > height) {
@@ -1420,18 +1204,18 @@
               }
             }
 
-            const canvas = document.createElement('canvas');
+            var canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
-            const ctx = canvas.getContext('2d');
+            var ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            var dataUrl = canvas.toDataURL('image/jpeg', quality);
             resolve(dataUrl);
           };
-          img.onerror = () => resolve(e.target.result);
+          img.onerror = function() { resolve(e.target.result); };
           img.src = e.target.result;
         };
-        reader.onerror = () => resolve('');
+        reader.onerror = function() { resolve(''); };
         reader.readAsDataURL(file);
       });
     }
@@ -1441,7 +1225,7 @@
       if (!item) return false;
       if (typeof item === 'object' && item.type === '3d') return true;
       if (typeof item === 'string') {
-        const clean = item.split('?')[0].toLowerCase().trim();
+        var clean = item.split('?')[0].toLowerCase().trim();
         return clean.endsWith('.html') || clean.endsWith('.htm') || clean.includes('/3d') || clean.includes('model') || clean.startsWith('data:text/html');
       }
       return false;
@@ -1454,92 +1238,82 @@
     }
 
     function sortImagesWith3DLast() {
-      const normalImgs = currentImages.filter(item => !is3dItem(item));
-      const items3d = currentImages.filter(item => is3dItem(item));
-      currentImages = [...normalImgs, ...items3d];
+      var normalImgs = currentImages.filter(function(item) { return !is3dItem(item); });
+      var items3d = currentImages.filter(function(item) { return is3dItem(item); });
+      currentImages = normalImgs.concat(items3d);
     }
 
     function renderImageGallery() {
-      const container = document.getElementById('multiImgGallery');
+      var container = document.getElementById('multiImgGallery');
       if (!container) return;
       if (!currentImages.length) {
         container.innerHTML = '<span style="font-size:13px; color:var(--lichen); opacity:0.6; padding:8px;" id="noImgNotice">No images or 3D files added yet. Upload files above or add a link below.</span>';
         return;
       }
 
-      container.innerHTML = currentImages.map((item, index) => {
-        const is3d = is3dItem(item);
-        const url = getItemUrl(item);
+      container.innerHTML = currentImages.map(function(item, index) {
+        var is3d = is3dItem(item);
+        var url = getItemUrl(item);
 
         if (is3d) {
-          let filename = '3D HTML View';
+          var filename = '3D HTML View';
           if (typeof item === 'object' && item.filename) {
             filename = item.filename;
           } else if (!url.startsWith('data:')) {
             filename = url.split('/').pop().split('\\').pop() || '3D HTML View';
           }
-          return `
-            <div style="position:relative; width:92px; height:74px; border-radius:8px; overflow:hidden; border:1.5px solid var(--caramel); background:#1e2014; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px; text-align:center;">
-              <span style="font-size:18px;">🧊</span>
-              <span style="font-size:9px; font-weight:700; color:var(--caramel); text-transform:uppercase; margin-top:2px;">3D Slide</span>
-              <span style="font-size:8px; color:var(--lichen); max-width:84px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${filename}">${filename}</span>
-              <span style="position:absolute; bottom:0; left:0; right:0; background:rgba(204,169,117,0.3); color:var(--cream); font-size:8px; font-weight:700; text-align:center; padding:1px 0;">LAST SLIDE</span>
-              <button type="button" onclick="removeImageAt(${index})" style="position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.8); color:#fff; border:none; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; line-height:1;" title="Remove 3D view">✕</button>
-            </div>
-          `;
+          return '<div style="position:relative; width:92px; height:74px; border-radius:8px; overflow:hidden; border:1.5px solid var(--caramel); background:#1e2014; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px; text-align:center;">'
+            + '<span style="font-size:18px;">&#129290;</span>'
+            + '<span style="font-size:9px; font-weight:700; color:var(--caramel); text-transform:uppercase; margin-top:2px;">3D Slide</span>'
+            + '<span style="font-size:8px; color:var(--lichen); max-width:84px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + filename + '">' + filename + '</span>'
+            + '<span style="position:absolute; bottom:0; left:0; right:0; background:rgba(204,169,117,0.3); color:var(--cream); font-size:8px; font-weight:700; text-align:center; padding:1px 0;">LAST SLIDE</span>'
+            + '<button type="button" onclick="removeImageAt(' + index + ')" style="position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.8); color:#fff; border:none; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; line-height:1;" title="Remove 3D view">X</button>'
+            + '</div>';
         }
 
-        return `
-          <div style="position:relative; width:74px; height:74px; border-radius:8px; overflow:hidden; border:1.5px solid ${index === 0 ? 'var(--caramel)' : 'rgba(204,169,117,0.3)'}; background:var(--deep); flex-shrink:0;">
-            <img src="${url}" alt="Image ${index + 1}" style="width:100%; height:100%; object-fit:cover; display:block;">
-            ${index === 0 ? '<span style="position:absolute; bottom:0; left:0; right:0; background:var(--caramel); color:var(--ink); font-size:9px; font-weight:700; text-align:center; padding:1px 0; text-transform:uppercase;">Cover</span>' : ''}
-            <button type="button" onclick="removeImageAt(${index})" style="position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.75); color:#fff; border:none; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; line-height:1;" title="Remove image">✕</button>
-          </div>
-        `;
+        return '<div style="position:relative; width:74px; height:74px; border-radius:8px; overflow:hidden; border:1.5px solid ' + (index === 0 ? 'var(--caramel)' : 'rgba(204,169,117,0.3)') + '; background:var(--deep); flex-shrink:0;">'
+          + '<img src="' + url + '" alt="Image ' + (index + 1) + '" style="width:100%; height:100%; object-fit:cover; display:block;">'
+          + (index === 0 ? '<span style="position:absolute; bottom:0; left:0; right:0; background:var(--caramel); color:var(--ink); font-size:9px; font-weight:700; text-align:center; padding:1px 0; text-transform:uppercase;">Cover</span>' : '')
+          + '<button type="button" onclick="removeImageAt(' + index + ')" style="position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.75); color:#fff; border:none; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; line-height:1;" title="Remove image">X</button>'
+          + '</div>';
       }).join('');
     }
 
     // ── Handle 3D HTML File Upload from Device ──
     async function handle3DFileUpload(e) {
-      const file = e.target.files && e.target.files[0];
+      var file = e.target.files && e.target.files[0];
       if (!file) return;
 
-      const lowerName = file.name.toLowerCase();
+      var lowerName = file.name.toLowerCase();
       if (!lowerName.endsWith('.html') && !lowerName.endsWith('.htm')) {
-        toast('⚠ Please choose an .html or .htm 3D viewer file.');
+        toast('Please choose an .html or .htm 3D viewer file.');
         e.target.value = '';
         return;
       }
 
-      toast(`Loading 3D HTML file "${file.name}"...`);
+      toast('Loading 3D HTML file "' + file.name + '"...');
 
-      const reader = new FileReader();
-      reader.onload = function (evt) {
-        let content = evt.target.result;
-        // Normalize MIME prefix if needed
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        var content = evt.target.result;
         if (content.startsWith('data:')) {
           if (!content.startsWith('data:text/html')) {
             content = content.replace(/^data:[^;]*/, 'data:text/html');
           }
         }
 
-        // Remove existing 3D items so this uploaded file is the primary 3D viewer
-        currentImages = currentImages.filter(x => !is3dItem(x));
-        currentImages.push({
-          type: '3d',
-          url: content,
-          filename: file.name
-        });
+        currentImages = currentImages.filter(function(x) { return !is3dItem(x); });
+        currentImages.push({ type: '3d', url: content, filename: file.name });
 
         sortImagesWith3DLast();
         renderImageGallery();
         e.target.value = '';
-        toast(`✓ 3D HTML View "${file.name}" attached! Click "Save Product" to upload to database.`);
+        toast('3D HTML View "' + file.name + '" attached! Click "Save Product" to upload to database.');
       };
 
-      reader.onerror = function (err) {
+      reader.onerror = function(err) {
         console.error('3D HTML file read error:', err);
-        toast('⚠ Failed to read the file from device.');
+        toast('Failed to read the file from device.');
         e.target.value = '';
       };
 
@@ -1547,13 +1321,13 @@
     }
 
     async function handleMultipleImageFiles(e) {
-      const files = Array.from(e.target.files || []);
+      var files = Array.from(e.target.files || []);
       if (!files.length) return;
-      toast(`Optimizing and loading ${files.length} photo${files.length > 1 ? 's' : ''}...`);
+      toast('Optimizing and loading ' + files.length + ' photo' + (files.length > 1 ? 's' : '') + '...');
 
-      for (const file of files) {
+      for (var i = 0; i < files.length; i++) {
         try {
-          const compressed = await compressImageFile(file, 960, 0.8);
+          var compressed = await compressImageFile(files[i], 960, 0.8);
           if (compressed) {
             currentImages.push(compressed);
           }
@@ -1564,22 +1338,23 @@
       sortImagesWith3DLast();
       renderImageGallery();
       e.target.value = '';
-      toast(`✓ ${files.length} photo${files.length > 1 ? 's' : ''} added!`);
+      toast(files.length + ' photo' + (files.length > 1 ? 's' : '') + ' added!');
     }
 
-    function addImageFromUrl(force3d = false) {
-      const input = document.getElementById('f-image-url');
-      const url = input ? input.value.trim() : '';
-      if (!url) { toast('⚠ Please enter an image URL or 3D HTML file path'); return; }
+    function addImageFromUrl(force3d) {
+      force3d = force3d || false;
+      var input = document.getElementById('f-image-url');
+      var url = input ? input.value.trim() : '';
+      if (!url) { toast('Please enter an image URL or 3D HTML file path'); return; }
 
-      const is3d = force3d || is3dItem(url);
+      var is3d = force3d || is3dItem(url);
       if (is3d) {
-        currentImages = currentImages.filter(x => !is3dItem(x));
+        currentImages = currentImages.filter(function(x) { return !is3dItem(x); });
         currentImages.push({ type: '3d', url: url });
-        toast('✓ 3D HTML View added as the Last Slide!');
+        toast('3D HTML View added as the Last Slide!');
       } else {
         currentImages.push(url);
-        toast('✓ Image link added');
+        toast('Image link added');
       }
 
       sortImagesWith3DLast();
@@ -1594,28 +1369,28 @@
 
     // ── Form Handling ──
     function getFormData() {
-      const nameEl = document.getElementById('f-name');
-      const codeEl = document.getElementById('f-code');
-      const matEl = document.getElementById('f-material');
-      const priceEl = document.getElementById('f-price');
-      const catEl = document.getElementById('f-category');
-      const badgeEl = document.getElementById('f-badge');
-      const hsnEl = document.getElementById('f-hsn');
-      const dimEl = document.getElementById('f-dimensions');
-      const wtEl = document.getElementById('f-weight');
-      const colEl = document.getElementById('f-color');
-      const descEl = document.getElementById('f-desc');
-      const careEl = document.getElementById('f-care');
-      const stockEl = document.getElementById('f-instock');
+      var nameEl = document.getElementById('f-name');
+      var codeEl = document.getElementById('f-code');
+      var matEl = document.getElementById('f-material');
+      var priceEl = document.getElementById('f-price');
+      var catEl = document.getElementById('f-category');
+      var badgeEl = document.getElementById('f-badge');
+      var hsnEl = document.getElementById('f-hsn');
+      var dimEl = document.getElementById('f-dimensions');
+      var wtEl = document.getElementById('f-weight');
+      var colEl = document.getElementById('f-color');
+      var descEl = document.getElementById('f-desc');
+      var careEl = document.getElementById('f-care');
+      var stockEl = document.getElementById('f-instock');
 
-      const rawPrice = priceEl ? priceEl.value.trim() : '0';
-      const parsedPrice = parseFloat(rawPrice) || 0;
+      var rawPrice = priceEl ? priceEl.value.trim() : '0';
+      var parsedPrice = parseFloat(rawPrice) || 0;
 
       sortImagesWith3DLast();
-      const item3d = currentImages.find(x => is3dItem(x));
-      const model3dUrl = item3d ? getItemUrl(item3d) : '';
-      const coverItem = currentImages.find(x => !is3dItem(x)) || currentImages[0];
-      const coverImg = coverItem ? getItemUrl(coverItem) : '';
+      var item3d = currentImages.find(function(x) { return is3dItem(x); });
+      var model3dUrl = item3d ? getItemUrl(item3d) : '';
+      var coverItem = currentImages.find(function(x) { return !is3dItem(x); }) || currentImages[0];
+      var coverImg = coverItem ? getItemUrl(coverItem) : '';
 
       return {
         id: editingId ? String(editingId) : Date.now().toString(),
@@ -1630,7 +1405,7 @@
         weight: wtEl ? wtEl.value.trim() : '',
         color: colEl ? colEl.value : '#CCA975',
         image: coverImg,
-        images: [...currentImages],
+        images: currentImages.slice(),
         model3d: model3dUrl,
         description: descEl ? descEl.value.trim() : '',
         care: careEl ? careEl.value.trim() : '',
@@ -1641,8 +1416,8 @@
 
     function fillForm(p) {
       if (!p) return;
-      const setVal = (id, val) => {
-        const el = document.getElementById(id);
+      var setVal = function(id, val) {
+        var el = document.getElementById(id);
         if (el) el.value = val || '';
       };
       setVal('f-name', p.name);
@@ -1658,12 +1433,12 @@
       setVal('f-desc', p.description);
       setVal('f-care', p.care);
 
-      const stockEl = document.getElementById('f-instock');
+      var stockEl = document.getElementById('f-instock');
       if (stockEl) stockEl.checked = p.inStock !== false;
 
-      let rawList = Array.isArray(p.images) && p.images.length ? [...p.images] : (p.image ? [p.image] : []);
+      var rawList = Array.isArray(p.images) && p.images.length ? p.images.slice() : (p.image ? [p.image] : []);
       if (p.model3d) {
-        const alreadyHas = rawList.some(x => getItemUrl(x) === p.model3d);
+        var alreadyHas = rawList.some(function(x) { return getItemUrl(x) === p.model3d; });
         if (!alreadyHas) {
           rawList.push({ type: '3d', url: p.model3d });
         }
@@ -1675,22 +1450,20 @@
 
     function resetForm() {
       editingId = null;
-      const ft = document.getElementById('formTitle');
+      var ft = document.getElementById('formTitle');
       if (ft) ft.textContent = 'Add New Product';
-      const tabLabel = document.getElementById('tabProductLabel');
-      if (tabLabel) tabLabel.textContent = 'Add New Product';
-      const cancelBtn = document.getElementById('btnCancelEdit');
+      var sb = document.getElementById('saveBtn');
+      if (sb) sb.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Product';
+      var cancelBtn = document.getElementById('cancelEditBtn');
       if (cancelBtn) cancelBtn.style.display = 'none';
-      const sb = document.getElementById('saveBtn');
-      if (sb) sb.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Product`;
 
-      ['f-name', 'f-code', 'f-hsn', 'f-material', 'f-price', 'f-category', 'f-badge', 'f-dimensions', 'f-weight', 'f-desc', 'f-care', 'f-image-url'].forEach(id => {
-        const el = document.getElementById(id);
+      ['f-name', 'f-code', 'f-hsn', 'f-material', 'f-price', 'f-category', 'f-badge', 'f-dimensions', 'f-weight', 'f-desc', 'f-care', 'f-image-url'].forEach(function(id) {
+        var el = document.getElementById(id);
         if (el) el.value = '';
       });
-      const col = document.getElementById('f-color');
+      var col = document.getElementById('f-color');
       if (col) col.value = '#CCA975';
-      const st = document.getElementById('f-instock');
+      var st = document.getElementById('f-instock');
       if (st) st.checked = true;
 
       currentImages = [];
@@ -1699,18 +1472,18 @@
     }
 
     function saveProduct() {
-      const nameInput = document.getElementById('f-name');
-      const priceInput = document.getElementById('f-price');
-      const name = nameInput ? nameInput.value.trim() : '';
-      const priceStr = priceInput ? priceInput.value.trim() : '';
+      var nameInput = document.getElementById('f-name');
+      var priceInput = document.getElementById('f-price');
+      var name = nameInput ? nameInput.value.trim() : '';
+      var priceStr = priceInput ? priceInput.value.trim() : '';
 
       if (!name) {
         if (nameInput) {
           nameInput.focus();
           nameInput.style.outline = '2px solid #e05656';
-          setTimeout(() => nameInput.style.outline = '', 2500);
+          setTimeout(function() { nameInput.style.outline = ''; }, 2500);
         }
-        toast('⚠ Product Name is required');
+        toast('Product Name is required');
         return;
       }
 
@@ -1718,25 +1491,24 @@
         if (priceInput) {
           priceInput.focus();
           priceInput.style.outline = '2px solid #e05656';
-          setTimeout(() => priceInput.style.outline = '', 2500);
+          setTimeout(function() { priceInput.style.outline = ''; }, 2500);
         }
-        toast('⚠ Valid Price is required (e.g. 48000)');
+        toast('Valid Price is required (e.g. 48000)');
         return;
       }
 
-      const data = getFormData();
-      // Auto-attach 526-28 3D model for YASH1 if not explicitly set
+      var data = getFormData();
       if ((data.code.toUpperCase() === 'YASH1' || data.name.toUpperCase().includes('YASH1')) && !data.model3d) {
         data.model3d = 'assets/526-28.html';
-        if (!data.images.some(x => is3dItem(x))) {
+        if (!data.images.some(function(x) { return is3dItem(x); })) {
           data.images.push({ type: '3d', url: 'assets/526-28.html' });
         }
       }
 
-      let products = getProducts();
+      var products = getProducts();
 
       if (editingId) {
-        const idx = products.findIndex(p => String(p.id) === String(editingId));
+        var idx = products.findIndex(function(p) { return String(p.id) === String(editingId); });
         if (idx !== -1) {
           data.createdAt = products[idx].createdAt;
           products[idx] = data;
@@ -1747,9 +1519,9 @@
         products.unshift(data);
       }
 
-      const saved = setProducts(products);
+      var saved = setProducts(products);
       if (saved) {
-        toast(editingId ? '✓ Product updated! Changes live on index.html' : '✓ Product added! Changes live on index.html');
+        toast(editingId ? 'Product updated! Changes live on index.html' : 'Product added! Changes live on index.html');
         resetForm();
         renderProducts();
         goSeg('dashboard');
@@ -1758,85 +1530,79 @@
 
     // ── Render Live Products ──
     function renderProducts() {
-      const q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
-      let products = getProducts();
+      var searchEl = document.getElementById('searchBox');
+      var q = (searchEl ? searchEl.value : '').toLowerCase().trim();
+      var products = getProducts();
       if (q) {
-        products = products.filter(p =>
-          (p.name || '').toLowerCase().includes(q) ||
-          (p.category || '').toLowerCase().includes(q) ||
-          (p.material || '').toLowerCase().includes(q) ||
-          (p.code || '').toLowerCase().includes(q) ||
-          (p.hsn || '').toLowerCase().includes(q)
-        );
+        products = products.filter(function(p) {
+          return (p.name || '').toLowerCase().includes(q) ||
+            (p.category || '').toLowerCase().includes(q) ||
+            (p.material || '').toLowerCase().includes(q) ||
+            (p.code || '').toLowerCase().includes(q) ||
+            (p.hsn || '').toLowerCase().includes(q);
+        });
       }
 
-      const badge = document.getElementById('countBadge');
-      if (badge) badge.textContent = `${products.length} product${products.length !== 1 ? 's' : ''}`;
-      const dashBadge = document.getElementById('dashCount');
-      if (dashBadge) dashBadge.textContent = products.length;
+      var badge = document.getElementById('countBadge');
+      if (badge) badge.textContent = products.length + ' product' + (products.length !== 1 ? 's' : '');
 
-      const grid = document.getElementById('prodGrid');
+      var grid = document.getElementById('prodGrid');
       if (!grid) return;
       if (!products.length) {
-        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-          <div style="font-size: 40px; margin-bottom: 12px; opacity: 0.6;">📦</div>
-          <p>${q ? 'No products match your search.' : 'No products in the store yet. Add your first piece using the form above!'}</p>
-        </div>`;
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div style="font-size: 40px; margin-bottom: 12px; opacity: 0.6;">&#128230;</div><p>' + (q ? 'No products match your search.' : 'No products in the store yet. Click &quot;+ Add New Product&quot; to add your first piece!') + '</p></div>';
         return;
       }
 
-      grid.innerHTML = products.map(p => {
-        const coverImg = (p.images && p.images[0]) || p.image || '';
-        const imgCount = (p.images && p.images.length) || (p.image ? 1 : 0);
-        const code = p.code || ('VL-' + (p.id ? String(p.id).slice(-4) : '101'));
-        const safeName = (p.name || 'Untitled').replace(/'/g, "\\'");
+      grid.innerHTML = products.map(function(p) {
+        var coverImg = (p.images && p.images[0]) || p.image || '';
+        var imgCount = (p.images && p.images.length) || (p.image ? 1 : 0);
+        var code = p.code || ('VL-' + (p.id ? String(p.id).slice(-4) : '101'));
+        var safeName = (p.name || 'Untitled').replace(/'/g, "\\'");
+        var safeId = String(p.id);
 
-        return `
-        <div class="prod-card">
-          <div class="stock-dot ${p.inStock !== false ? '' : 'out'}" title="${p.inStock !== false ? 'In Stock (Live)' : 'Out of Stock'}"></div>
-          <div class="prod-card-top">
-            <div class="prod-thumb">
-              ${coverImg ? `<img src="${coverImg}" alt="${p.name || ''}" style="width:100%;height:100%;object-fit:cover;">` : `<svg width="28" height="28" viewBox="0 0 24 24" fill="${p.color || '#CCA975'}" opacity=".8"><rect x="3" y="10" width="18" height="11" rx="2"/><path d="M5 10V7a7 7 0 0114 0v3" fill="none" stroke="${p.color || '#CCA975'}" stroke-width="1.5"/></svg>`}
-            </div>
-            <div class="prod-info">
-              <div style="font-size:11px;font-weight:600;letter-spacing:1px;color:var(--caramel);">CODE: ${code}</div>
-              <div class="prod-name" title="${p.name || ''}">${p.name || 'Untitled'}</div>
-              <div class="prod-material">${p.material || '—'}${p.hsn ? ` • <span style="color:var(--caramel);">HSN: ${p.hsn}</span>` : ''}</div>
-              <div class="prod-price">₹${Number(p.price || 0).toLocaleString('en-IN')}</div>
-            </div>
-          </div>
-          <div class="prod-tags">
-            ${imgCount > 1 ? `<span class="tag" style="background:rgba(255,253,240,0.08);color:var(--cream);">📷 ${imgCount} photos</span>` : ''}
-            ${(p.model3d || (p.images && p.images.some(x => is3dItem(x)))) ? `<span class="tag" style="background:rgba(204,169,117,0.22);border-color:var(--caramel);color:var(--cream);">🧊 3D HTML View</span>` : ''}
-            <span class="tag">${p.category || 'Collection'}</span>
-            ${p.badge ? `<span class="tag" style="background:rgba(204,169,117,.15);color:var(--caramel);border-color:rgba(204,169,117,.3)">${p.badge}</span>` : ''}
-            ${p.inStock === false ? '<span class="tag out">Hidden / Out of Stock</span>' : ''}
-          </div>
-          ${p.description ? `<div class="prod-desc">${p.description}</div>` : ''}
-          <div class="prod-actions">
-            <button class="btn sm" onclick="editProduct('${p.id}')">Edit</button>
-            <button class="btn sm ghost" onclick="addToSalesOrder('${p.id}')" style="color:var(--caramel);border-color:rgba(204,169,117,0.35);" title="Add this item to Sales Order">+ Sales Order</button>
-            <button class="btn sm danger" onclick="confirmDelete('${p.id}', '${safeName}')">Delete</button>
-          </div>
-        </div>
-        `;
+        return '<div class="prod-card">'
+          + '<div class="stock-dot ' + (p.inStock !== false ? '' : 'out') + '" title="' + (p.inStock !== false ? 'In Stock (Live)' : 'Out of Stock') + '"></div>'
+          + '<div class="prod-card-top">'
+            + '<div class="prod-thumb">'
+              + (coverImg ? '<img src="' + coverImg + '" alt="' + (p.name || '') + '" style="width:100%;height:100%;object-fit:cover;">' : '<svg width="28" height="28" viewBox="0 0 24 24" fill="' + (p.color || '#CCA975') + '" opacity=".8"><rect x="3" y="10" width="18" height="11" rx="2"/><path d="M5 10V7a7 7 0 0114 0v3" fill="none" stroke="' + (p.color || '#CCA975') + '" stroke-width="1.5"/></svg>')
+            + '</div>'
+            + '<div class="prod-info">'
+              + '<div style="font-size:11px;font-weight:600;letter-spacing:1px;color:var(--caramel);">CODE: ' + code + '</div>'
+              + '<div class="prod-name" title="' + (p.name || '') + '">' + (p.name || 'Untitled') + '</div>'
+              + '<div class="prod-material">' + (p.material || '&mdash;') + (p.hsn ? ' &bull; <span style="color:var(--caramel);">HSN: ' + p.hsn + '</span>' : '') + '</div>'
+              + '<div class="prod-price">&#8377;' + Number(p.price || 0).toLocaleString('en-IN') + '</div>'
+            + '</div>'
+          + '</div>'
+          + '<div class="prod-tags">'
+            + (imgCount > 1 ? '<span class="tag" style="background:rgba(255,253,240,0.08);color:var(--cream);">&#128247; ' + imgCount + ' photos</span>' : '')
+            + ((p.model3d || (p.images && p.images.some(function(x) { return is3dItem(x); }))) ? '<span class="tag" style="background:rgba(204,169,117,0.22);border-color:var(--caramel);color:var(--cream);">&#129290; 3D HTML View</span>' : '')
+            + '<span class="tag">' + (p.category || 'Collection') + '</span>'
+            + (p.badge ? '<span class="tag" style="background:rgba(204,169,117,.15);color:var(--caramel);border-color:rgba(204,169,117,.3)">' + p.badge + '</span>' : '')
+            + (p.inStock === false ? '<span class="tag out">Hidden / Out of Stock</span>' : '')
+          + '</div>'
+          + (p.description ? '<div class="prod-desc">' + p.description + '</div>' : '')
+          + '<div class="prod-actions">'
+            + '<button class="btn sm" onclick="editProduct(\'' + safeId + '\')">Edit</button>'
+            + '<button class="btn sm ghost" onclick="addToSalesOrder(\'' + safeId + '\')" title="Add to Sales Order">+ Sales Order</button>'
+            + '<button class="btn sm danger" onclick="confirmDelete(\'' + safeId + '\', \'' + safeName + '\')">Delete</button>'
+          + '</div>'
+          + '</div>';
       }).join('');
     }
 
     // ── Edit ──
     function editProduct(id) {
-      const p = getProducts().find(p => String(p.id) === String(id));
+      var p = getProducts().find(function(prod) { return String(prod.id) === String(id); });
       if (!p) return;
       editingId = p.id;
       fillForm(p);
-      document.getElementById('formTitle').textContent = 'Edit Product';
-      const tabLabel = document.getElementById('tabProductLabel');
-      if (tabLabel) tabLabel.textContent = 'Edit Product';
-      const cancelBtn = document.getElementById('btnCancelEdit');
+      var ft = document.getElementById('formTitle');
+      if (ft) ft.textContent = 'Edit Product: ' + (p.name || '');
+      var sb = document.getElementById('saveBtn');
+      if (sb) sb.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Update Product';
+      var cancelBtn = document.getElementById('cancelEditBtn');
       if (cancelBtn) cancelBtn.style.display = 'inline-flex';
-      document.getElementById('saveBtn').innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Update Product`;
       goSeg('product');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function cancelEdit() {
@@ -1845,121 +1611,594 @@
     }
 
     // ── Delete confirm ──
-let pendingDeleteId = null;
-function confirmDelete(id, name) {
-  pendingDeleteId = id;
-  document.getElementById('confirmMsg').textContent = `Delete "${name}" ? It will disappear from the storefront.`;
-  document.getElementById('confirmModal').classList.add('open');
-}
-function closeConfirm() {
-  pendingDeleteId = null;
-  document.getElementById('confirmModal').classList.remove('open');
-}
-document.getElementById('confirmYes').onclick = function() {
-  if (!pendingDeleteId) return;
-  let products = getProducts().filter(p => p.id !== pendingDeleteId);
-  setProducts(products);
-  closeConfirm();
-  renderProducts();
-  toast('Product deleted from storefront');
-};
-
-// ── Close modals on overlay click / Escape ──
-document.getElementById('confirmModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('confirmModal')) closeConfirm();
-});
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeConfirm();
-});
-
-// ── Sample Seeder (Convenient for first run) ──
-function seedSampleProducts() {
-  if (getProducts().length > 0 && !confirm('Add sample handcrafted Vanya pieces to your list?')) {
-    return;
-  }
-  const samples = [
-    {
-      id: 'yash1',
-      code: 'YASH1',
-      name: 'YASH1 Handcrafted Lounge Chair',
-      material: 'Reclaimed teakwood from Rajasthan havelis',
-      price: 48500,
-      category: 'Seating',
-      badge: '3D Interactive',
-      hsn: '94036000',
-      dimensions: '82 × 76 × 74 cm',
-      weight: '16',
-      color: '#CCA975',
-      image: 'assets/sample.jpg',
-      images: [
-        'assets/sample.jpg',
-        'assets/sample2.jpg',
-        { type: '3d', url: 'assets/526-28.html' }
-      ],
-      model3d: 'assets/526-28.html',
-      description: 'Crafted from centennial reclaimed teak salvaged from heritage havelis. Hand-finished with cold-pressed linseed oil and raw beeswax. Features interactive 3D inspection on the last slide.',
-      care: 'Wipe with a soft dry cotton cloth. Condition with organic wood wax twice a year.',
-      inStock: true
-    },
-    {
-      id: 'v2',
-      code: 'VL-TB02',
-      name: 'Nilgiri Live-Edge Coffee Table',
-      material: 'Fallen rosewood, Nilgiri hills',
-      price: 62000,
-      category: 'Tables',
-      badge: 'Limited Edition',
-      hsn: '94036000',
-      dimensions: '120 × 65 × 42 cm',
-      weight: '24',
-      color: '#6B6F4E',
-      image: '',
-      description: 'Formed from naturally fallen Nilgiri rosewood. Its deep grain contours are preserved untouched with an organic matte oil seal.',
-      care: 'Keep away from excessive dampness. Use coasters for hot mugs.',
-      inStock: true
-    },
-    {
-      id: 'v3',
-      code: 'VL-SH03',
-      name: 'Vanashri Minimalist Bookshelf',
-      material: 'Sustainably farmed Sheesham',
-      price: 84000,
-      category: 'Storage',
-      badge: 'New',
-      hsn: '94036000',
-      dimensions: '100 × 38 × 185 cm',
-      weight: '38',
-      color: '#6B6F4E',
-      image: '',
-      description: 'An airy, open-form shelving unit celebrating the rich natural variegation of North Indian sheesham wood.',
-      care: 'Dust regularly with a dry cloth. Avoid placing directly under strong air-conditioner drafts.',
-      inStock: true
+    var pendingDeleteId = null;
+    function confirmDelete(id, name) {
+      pendingDeleteId = id;
+      document.getElementById('confirmMsg').textContent = 'Delete "' + name + '" ? It will disappear from the storefront.';
+      document.getElementById('confirmModal').classList.add('open');
     }
-  ];
-
-  let existing = getProducts();
-  setProducts([...existing, ...samples]);
-  renderProducts();
-  toast('✓ 3 handcrafted pieces added! Open index.html to see them live.');
-}
-
-// ── Init ──
-renderProducts();
-
-if (window.vanyaDB) {
-  window.vanyaDB.getProducts().then(prods => {
-    if (prods && prods.length > 0) {
-      window.vl_products = prods;
+    function closeConfirm() {
+      pendingDeleteId = null;
+      document.getElementById('confirmModal').classList.remove('open');
+    }
+    document.getElementById('confirmYes').onclick = function() {
+      if (!pendingDeleteId) return;
+      var products = getProducts().filter(function(p) { return p.id !== pendingDeleteId; });
+      setProducts(products);
+      closeConfirm();
       renderProducts();
-    }
-  });
-  window.vanyaDB.subscribe((prods) => {
-    if (prods && prods.length > 0) {
-      window.vl_products = prods;
+      toast('Product deleted from storefront');
+    };
+
+    // ── Close modals on overlay click / Escape ──
+    document.getElementById('confirmModal').addEventListener('click', function(e) {
+      if (e.target === document.getElementById('confirmModal')) closeConfirm();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeConfirm();
+    });
+
+    // ── Sample Seeder ──
+    function seedSampleProducts() {
+      if (getProducts().length > 0 && !confirm('Add sample handcrafted Vanya pieces to your list?')) {
+        return;
+      }
+      var samples = [
+        {
+          id: 'yash1',
+          code: 'YASH1',
+          name: 'YASH1 Handcrafted Lounge Chair',
+          material: 'Reclaimed teakwood from Rajasthan havelis',
+          price: 48500,
+          category: 'Seating',
+          badge: '3D Interactive',
+          hsn: '94036000',
+          dimensions: '82 x 76 x 74 cm',
+          weight: '16',
+          color: '#CCA975',
+          image: 'assets/sample.jpg',
+          images: ['assets/sample.jpg', 'assets/sample2.jpg', { type: '3d', url: 'assets/526-28.html' }],
+          model3d: 'assets/526-28.html',
+          description: 'Crafted from centennial reclaimed teak salvaged from heritage havelis. Hand-finished with cold-pressed linseed oil and raw beeswax.',
+          care: 'Wipe with a soft dry cotton cloth. Condition with organic wood wax twice a year.',
+          inStock: true
+        },
+        {
+          id: 'v2',
+          code: 'VL-TB02',
+          name: 'Nilgiri Live-Edge Coffee Table',
+          material: 'Fallen rosewood, Nilgiri hills',
+          price: 62000,
+          category: 'Tables',
+          badge: 'Limited Edition',
+          hsn: '94036000',
+          dimensions: '120 x 65 x 42 cm',
+          weight: '24',
+          color: '#6B6F4E',
+          image: '',
+          description: 'Formed from naturally fallen Nilgiri rosewood. Its deep grain contours are preserved untouched with an organic matte oil seal.',
+          care: 'Keep away from excessive dampness. Use coasters for hot mugs.',
+          inStock: true
+        },
+        {
+          id: 'v3',
+          code: 'VL-SH03',
+          name: 'Vanashri Minimalist Bookshelf',
+          material: 'Sustainably farmed Sheesham',
+          price: 84000,
+          category: 'Storage',
+          badge: 'New',
+          hsn: '94036000',
+          dimensions: '100 x 38 x 185 cm',
+          weight: '38',
+          color: '#6B6F4E',
+          image: '',
+          description: 'An airy, open-form shelving unit celebrating the rich natural variegation of North Indian sheesham wood.',
+          care: 'Dust regularly with a dry cloth. Avoid placing directly under strong air-conditioner drafts.',
+          inStock: true
+        }
+      ];
+
+      var existing = getProducts();
+      setProducts(existing.concat(samples));
       renderProducts();
+      toast('3 handcrafted pieces added! Open index.html to see them live.');
     }
-  });
-}
+
+    // ══════════════════════════════════════════
+    // SALES ORDER (localStorage only - no Firestore)
+    // ══════════════════════════════════════════
+    var soData = {
+      lines: [],
+      customer: {},
+      billing: {},
+      shipping: {},
+      sameAddress: false,
+      notes: '',
+      payTerms: '',
+      leadTime: '',
+      discount: 0,
+      gstPct: 18,
+      date: ''
+    };
+
+    function generateSoNumber() {
+      var now = new Date();
+      var yy = String(now.getFullYear()).slice(-2);
+      var mm = String(now.getMonth() + 1).padStart(2, '0');
+      var dd = String(now.getDate()).padStart(2, '0');
+      var hh = String(now.getHours()).padStart(2, '0');
+      var nn = String(now.getMinutes()).padStart(2, '0');
+      return 'SO-VL-' + yy + mm + dd + '-' + hh + nn;
+    }
+
+    function loadSoData() {
+      try {
+        var raw = localStorage.getItem(SO_KEY);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed) soData = Object.assign({
+            lines: [], customer: {}, billing: {}, shipping: {},
+            sameAddress: false, notes: '', payTerms: '', leadTime: '',
+            discount: 0, gstPct: 18, date: ''
+          }, parsed);
+        }
+      } catch (e) { /* ignore */ }
+      if (!soData.soNumber) {
+        soData.soNumber = generateSoNumber();
+      }
+      var soNumEl = document.getElementById('soNumber');
+      if (soNumEl) soNumEl.value = soData.soNumber;
+    }
+
+    function saveSoData() {
+      try { localStorage.setItem(SO_KEY, JSON.stringify(soData)); } catch (e) { /* ignore */ }
+    }
+
+    function syncSoInputsFromData() {
+      var c = soData.customer || {};
+      var b = soData.billing || {};
+      var s = soData.shipping || {};
+      var setV = function(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; };
+      setV('so-cust-name', c.name);
+      setV('so-cust-firm', c.firm);
+      setV('so-cust-gstin', c.gstin);
+      setV('so-cust-phone', c.phone);
+      setV('so-cust-email', c.email);
+      setV('so-date', soData.date);
+      setV('so-bill-addr1', b.addr1);
+      setV('so-bill-addr2', b.addr2);
+      setV('so-bill-city', b.city);
+      setV('so-bill-state', b.state);
+      setV('so-bill-pin', b.pin);
+      setV('so-ship-addr1', s.addr1);
+      setV('so-ship-addr2', s.addr2);
+      setV('so-ship-city', s.city);
+      setV('so-ship-state', s.state);
+      setV('so-ship-pin', s.pin);
+      setV('so-notes', soData.notes);
+      setV('so-pay-terms', soData.payTerms);
+      setV('so-lead-time', soData.leadTime);
+      var discEl = document.getElementById('so-discount');
+      if (discEl) discEl.value = soData.discount || 0;
+      var gstEl = document.getElementById('so-gst-pct');
+      if (gstEl) gstEl.value = soData.gstPct != null ? soData.gstPct : 18;
+      var sameEl = document.getElementById('so-same-addr');
+      if (sameEl) sameEl.checked = !!soData.sameAddress;
+      var shipFields = document.getElementById('so-ship-fields');
+      if (shipFields) shipFields.style.display = soData.sameAddress ? 'none' : '';
+      renderSoLines();
+      updateSoLinesCount();
+    }
+
+    function syncSoDataFromInputs() {
+      var gV = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+      soData.customer = {
+        name: gV('so-cust-name'),
+        firm: gV('so-cust-firm'),
+        gstin: gV('so-cust-gstin'),
+        phone: gV('so-cust-phone'),
+        email: gV('so-cust-email')
+      };
+      soData.date = gV('so-date');
+      soData.billing = {
+        addr1: gV('so-bill-addr1'),
+        addr2: gV('so-bill-addr2'),
+        city: gV('so-bill-city'),
+        state: gV('so-bill-state'),
+        pin: gV('so-bill-pin')
+      };
+      soData.shipping = {
+        addr1: gV('so-ship-addr1'),
+        addr2: gV('so-ship-addr2'),
+        city: gV('so-ship-city'),
+        state: gV('so-ship-state'),
+        pin: gV('so-ship-pin')
+      };
+      soData.notes = gV('so-notes');
+      soData.payTerms = gV('so-pay-terms');
+      soData.leadTime = gV('so-lead-time');
+      var discEl = document.getElementById('so-discount');
+      soData.discount = discEl ? (parseFloat(discEl.value) || 0) : 0;
+      var gstEl = document.getElementById('so-gst-pct');
+      soData.gstPct = gstEl ? (parseFloat(gstEl.value) || 0) : 18;
+      saveSoData();
+      updateSoLinesCount();
+    }
+
+    function toggleSameAddress(isSame) {
+      soData.sameAddress = isSame;
+      var fields = document.getElementById('so-ship-fields');
+      if (fields) fields.style.display = isSame ? 'none' : '';
+      if (isSame) {
+        soData.shipping = Object.assign({}, soData.billing);
+      }
+      saveSoData();
+    }
+
+    function populateSoProductSelect() {
+      var sel = document.getElementById('soDashProductSelect');
+      if (!sel) return;
+      var products = getProducts();
+      sel.innerHTML = '<option value="">-- Select a product --</option>';
+      products.forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = (p.name || 'Untitled') + ' — Rs.' + Number(p.price || 0).toLocaleString('en-IN');
+        sel.appendChild(opt);
+      });
+    }
+
+    function addSelectedDashboardProduct() {
+      var sel = document.getElementById('soDashProductSelect');
+      var id = sel ? sel.value : '';
+      if (!id) { toast('Please select a product first'); return; }
+      addToSalesOrder(id);
+      if (sel) sel.value = '';
+    }
+
+    function addToSalesOrder(productId) {
+      var products = getProducts();
+      var p = products.find(function(prod) { return String(prod.id) === String(productId); });
+      if (!p) { toast('Product not found'); return; }
+      var existing = soData.lines.find(function(l) { return l.productId === String(productId); });
+      if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+        existing.amount = existing.qty * existing.unitPrice;
+        toast('Qty increased for ' + (p.name || 'product') + ' in Sales Order');
+      } else {
+        soData.lines.push({
+          productId: String(productId),
+          desc: p.name || '',
+          code: p.code || '',
+          hsn: p.hsn || '',
+          qty: 1,
+          unitPrice: p.price || 0,
+          amount: p.price || 0
+        });
+        toast((p.name || 'Product') + ' added to Sales Order');
+      }
+      saveSoData();
+      if (document.getElementById('seg-salesorder').classList.contains('on')) {
+        renderSoLines();
+        updateSoLinesCount();
+      }
+      goSeg('salesorder');
+    }
+
+    function addBlankSoLine() {
+      soData.lines.push({ productId: '', desc: '', code: '', hsn: '', qty: 1, unitPrice: 0, amount: 0 });
+      saveSoData();
+      renderSoLines();
+      updateSoLinesCount();
+    }
+
+    function clearSoLines() {
+      soData.lines = [];
+      saveSoData();
+      renderSoLines();
+      updateSoLinesCount();
+    }
+
+    function removeSoLine(idx) {
+      soData.lines.splice(idx, 1);
+      saveSoData();
+      renderSoLines();
+      updateSoLinesCount();
+    }
+
+    function soLineChanged(idx, field, value) {
+      if (!soData.lines[idx]) return;
+      soData.lines[idx][field] = field === 'qty' || field === 'unitPrice' ? (parseFloat(value) || 0) : value;
+      soData.lines[idx].amount = (soData.lines[idx].qty || 0) * (soData.lines[idx].unitPrice || 0);
+      saveSoData();
+      var amtCell = document.getElementById('so-line-amt-' + idx);
+      if (amtCell) amtCell.textContent = 'Rs. ' + Number(soData.lines[idx].amount).toLocaleString('en-IN');
+      updateSoLinesCount();
+    }
+
+    function renderSoLines() {
+      var tbody = document.getElementById('soLinesBody');
+      if (!tbody) return;
+      if (!soData.lines.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lichen);padding:24px;">No items added yet. Use Quick Add or click &quot;+ Add Line&quot;.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = soData.lines.map(function(line, i) {
+        return '<tr>'
+          + '<td style="color:var(--lichen);">' + (i + 1) + '</td>'
+          + '<td><input type="text" value="' + (line.desc || '') + '" placeholder="Product / description" oninput="soLineChanged(' + i + ',\'desc\',this.value)"></td>'
+          + '<td><input type="text" value="' + (line.code || '') + '" placeholder="Code" style="width:90px;" oninput="soLineChanged(' + i + ',\'code\',this.value)"></td>'
+          + '<td><input type="text" value="' + (line.hsn || '') + '" placeholder="HSN" style="width:70px;" oninput="soLineChanged(' + i + ',\'hsn\',this.value)"></td>'
+          + '<td><input type="number" value="' + (line.qty || 1) + '" min="1" style="width:60px;" oninput="soLineChanged(' + i + ',\'qty\',this.value)"></td>'
+          + '<td><input type="number" value="' + (line.unitPrice || 0) + '" min="0" style="width:100px;" oninput="soLineChanged(' + i + ',\'unitPrice\',this.value)"></td>'
+          + '<td id="so-line-amt-' + i + '" style="color:var(--caramel);font-weight:600;">Rs. ' + Number(line.amount || 0).toLocaleString('en-IN') + '</td>'
+          + '<td><button type="button" onclick="removeSoLine(' + i + ')" style="background:none;border:none;color:#e07060;cursor:pointer;font-size:16px;" title="Remove">&#10005;</button></td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    function updateSoLinesCount() {
+      var discEl = document.getElementById('so-discount');
+      var gstEl = document.getElementById('so-gst-pct');
+      soData.discount = discEl ? (parseFloat(discEl.value) || 0) : soData.discount;
+      soData.gstPct = gstEl ? (parseFloat(gstEl.value) || 0) : soData.gstPct;
+
+      var subtotal = soData.lines.reduce(function(acc, l) { return acc + (l.amount || 0); }, 0);
+      var afterDisc = subtotal - (soData.discount || 0);
+      var gstAmt = afterDisc * ((soData.gstPct || 0) / 100);
+      var grandTotal = afterDisc + gstAmt;
+
+      var cntEl = document.getElementById('soLineCount');
+      if (cntEl) cntEl.textContent = '(' + soData.lines.length + ' item' + (soData.lines.length !== 1 ? 's' : '') + ')';
+      var subEl = document.getElementById('soSubtotal');
+      if (subEl) subEl.textContent = 'Rs. ' + subtotal.toLocaleString('en-IN');
+      var totalEl = document.getElementById('soGrandTotal');
+      if (totalEl) totalEl.textContent = 'Rs. ' + grandTotal.toLocaleString('en-IN');
+      saveSoData();
+    }
+
+    function resetSalesOrder() {
+      if (!confirm('Start a new Sales Order? Current data will be cleared.')) return;
+      soData = {
+        soNumber: generateSoNumber(),
+        lines: [],
+        customer: {},
+        billing: {},
+        shipping: {},
+        sameAddress: false,
+        notes: '',
+        payTerms: '',
+        leadTime: '',
+        discount: 0,
+        gstPct: 18,
+        date: ''
+      };
+      saveSoData();
+      var soNumEl = document.getElementById('soNumber');
+      if (soNumEl) soNumEl.value = soData.soNumber;
+      syncSoInputsFromData();
+      toast('New Sales Order started');
+    }
+
+    function printSalesOrderPdf() {
+      syncSoDataFromInputs();
+
+      var J = window.jspdf && window.jspdf.jsPDF;
+      if (!J) { toast('PDF library not loaded yet. Please wait and try again.'); return; }
+
+      var soNum = soData.soNumber || generateSoNumber();
+      var d = new J({ unit: 'mm', format: 'a4' });
+      var L = 14, R = 196, H = 287; var y = 18;
+      var txt = function(t, x, o) { d.text(String(t), x, y, o); };
+      var rs = function(n) { return 'Rs. ' + (+n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+
+      // ── Logo top-right (matches PO exactly) ──
+      try { d.addImage(LOGO, 'PNG', R - 14 * LOGO_R, 8, 14 * LOGO_R, 14); } catch(e) {}
+
+      // ── Title line ──
+      d.setFont('helvetica', 'bold'); d.setFontSize(16);
+      txt('SALES ORDER', L);
+      d.setFontSize(10); d.setFont('helvetica', 'normal');
+      txt(soNum, L + 50);
+      y += 7;
+
+      // ── Date / metadata line ──
+      var c = soData.customer || {};
+      var metaParts = [
+        soData.date ? 'Date: ' + soData.date : '',
+        soData.leadTime ? 'Lead time: ' + soData.leadTime : '',
+        c.name ? 'Prepared for: ' + c.name : ''
+      ].filter(Boolean);
+      txt(metaParts.join('     ') || '', L);
+      y += 8;
+
+      // ── Customer block (left) + Billing/Shipping (right) ──
+      var W2 = 88;
+      var mk = function(a) { return d.splitTextToSize(a.filter(Boolean).join('\n'), W2); };
+      var b = soData.billing || {};
+      var s = soData.sameAddress ? soData.billing : (soData.shipping || {});
+
+      var custLines = mk([
+        c.name || '',
+        c.firm ? 'Firm: ' + c.firm : '',
+        c.gstin ? 'GSTIN: ' + c.gstin : '',
+        c.phone ? 'Contact: ' + c.phone : '',
+        c.email ? 'Email: ' + c.email : ''
+      ]);
+
+      var billLines = mk([
+        'Bill to:',
+        [b.addr1, b.addr2].filter(Boolean).join(', '),
+        [b.city, b.state].filter(Boolean).join(', '),
+        b.pin ? 'PIN: ' + b.pin : ''
+      ]);
+
+      var shipLines = mk([
+        'Ship to:',
+        [s.addr1, s.addr2].filter(Boolean).join(', '),
+        [s.city, s.state].filter(Boolean).join(', '),
+        s.pin ? 'PIN: ' + s.pin : ''
+      ]);
+
+      var col = function(x, items) {
+        var yy = y;
+        items.forEach(function(pair) {
+          var label = pair[0], ls = pair[1];
+          if (!ls.length) return;
+          d.setFont('helvetica', 'bold'); d.text(label, x, yy); yy += 5;
+          d.setFont('helvetica', 'normal'); d.text(ls, x, yy); yy += ls.length * 4.6 + 1.5;
+        });
+        return yy;
+      };
+
+      y = Math.max(
+        col(L, [['Customer', custLines]]),
+        col(108, [['Billing', billLines], ['Shipping', shipLines]])
+      ) + 4;
+
+      // ── Table header (matches PO hdr style) ──
+      var hdr = function() {
+        d.setFont('helvetica', 'bold'); d.setFontSize(9);
+        d.setFillColor(235, 238, 243); d.rect(L, y - 4.5, R - L, 7, 'F');
+        d.setTextColor(0, 0, 0);
+        txt('#', L + 1);
+        txt('Description / Product', L + 8);
+        txt('Code', L + 72);
+        txt('HSN', L + 94);
+        txt('Qty', 138, { align: 'right' });
+        txt('Unit Price', 166, { align: 'right' });
+        txt('Amount', R - 1, { align: 'right' });
+        y += 7; d.setFont('helvetica', 'normal'); d.setFontSize(9);
+      };
+
+      hdr();
+      var sub = 0;
+
+      soData.lines.forEach(function(line, i) {
+        var amt = (+line.qty || 0) * (+line.unitPrice || 0);
+        sub += amt;
+        var desc = d.splitTextToSize(line.desc || '-', 60);
+        var rowH = Math.max(desc.length, 1) * 4.6 + 2;
+        if (y + rowH > H - 40) { d.addPage(); y = 18; hdr(); }
+        d.setTextColor(0, 0, 0);
+        txt(i + 1, L + 1);
+        d.text(desc, L + 8, y);
+        txt(line.code || '-', L + 72);
+        txt(line.hsn || '-', L + 94);
+        txt(line.qty || 1, 138, { align: 'right' });
+        txt(rs(line.unitPrice || 0), 166, { align: 'right' });
+        txt(rs(amt), R - 1, { align: 'right' });
+        y += rowH;
+        d.setDrawColor(217, 221, 227); d.line(L, y - 3.2, R, y - 3.2);
+      });
+
+      if (!soData.lines.length) { txt('No items added', L + 1); y += 6; }
+
+      if (y > H - 45) { d.addPage(); y = 18; }
+
+      // ── Totals (matches PO style) ──
+      var disc = soData.discount || 0;
+      var gstPct = soData.gstPct || 0;
+      var afterDisc = sub - disc;
+      var gstAmt = afterDisc * (gstPct / 100);
+      var grandTotal = afterDisc + gstAmt;
+
+      y += 4;
+      d.setFont('helvetica', 'normal'); d.setFontSize(9); d.setTextColor(0, 0, 0);
+      txt('Subtotal', 150, { align: 'right' }); txt(rs(sub), R - 1, { align: 'right' }); y += 5.5;
+      if (disc > 0) {
+        txt('Discount', 150, { align: 'right' }); txt('- ' + rs(disc), R - 1, { align: 'right' }); y += 5.5;
+      }
+      txt('GST ' + gstPct + '%', 150, { align: 'right' }); txt(rs(gstAmt), R - 1, { align: 'right' }); y += 6;
+      d.setFont('helvetica', 'bold'); d.setFontSize(11);
+      txt('Grand Total', 150, { align: 'right' }); txt(rs(grandTotal), R - 1, { align: 'right' }); y += 9;
+
+      // ── Notes / Terms paragraphs ──
+      d.setFont('helvetica', 'normal'); d.setFontSize(9);
+      var para = function(label, val) {
+        if (!val) return;
+        var ls = d.splitTextToSize(val, R - L - 34);
+        if (y + ls.length * 4.5 > H - 14) { d.addPage(); y = 18; }
+        d.setFont('helvetica', 'bold'); txt(label, L);
+        d.setFont('helvetica', 'normal'); d.text(ls, L + 34, y);
+        y += ls.length * 4.5 + 2.5;
+      };
+      para('Payment terms', soData.payTerms);
+      para('Lead time', soData.leadTime);
+      para('Notes / remarks', soData.notes);
+
+      // ── Footer signature block ──
+      if (y > H - 68) { d.addPage(); y = 18; }
+      y += 3;
+      d.setFont('helvetica', 'bold'); d.setFontSize(9); d.setTextColor(0, 0, 0);
+      txt('Vanya Living', L);
+      txt('vanya.living.care@gmail.com', L + 50);
+      y += 14;
+      d.setDrawColor(120, 120, 120); d.line(R - 60, y, R, y); y += 4.5;
+      d.setFont('helvetica', 'normal'); txt('Authorized signatory', R, { align: 'right' });
+      y += 3;
+
+      // ── Stamp ──
+      try { d.addImage(STAMP, 'PNG', R - 24 * STAMP_R, y, 24 * STAMP_R, 24); } catch(e) {} y += 24;
+
+      // ── Footer tagline (matches PO exactly) ──
+      var np = d.getNumberOfPages(); d.setPage(np);
+      d.setFontSize(7.5); d.setTextColor(110, 110, 110); d.setFont('helvetica', 'bold');
+      d.text("Hey Customer, we are excited to craft something beautiful for you. Thank you for choosing Vanya Living!", 105, H + 4, { align: 'center' });
+      d.text('*This is a Vanya Living document. All data is reserved with Vanya Living.', 105, H + 8, { align: 'center' });
+      d.setTextColor(0, 0, 0);
+
+      var filename = (soNum.replace(/[^\w.-]+/g, '_')) + '.pdf';
+      try {
+        d.save(filename);
+      } catch(e) {
+        try {
+          var blob = d.output('blob');
+          var u = URL.createObjectURL(blob);
+          var a = document.createElement('a'); a.href = u; a.download = filename;
+          document.body.appendChild(a); a.click();
+          setTimeout(function() { URL.revokeObjectURL(u); }, 2000);
+        } catch(e2) { console.error(e2); alert('Could not create PDF. Please try again.'); }
+      }
+      toast('Sales Order PDF downloaded!');
+    }
+
+    // ── Init ──
+    renderProducts();
+    loadSoData();
+    syncSoInputsFromData();
+    populateSoProductSelect();
+    updateSoLinesCount();
+
+    if (window.vanyaDB) {
+      window.vanyaDB.getProducts().then(function(prods) {
+        if (prods && prods.length > 0) {
+          window.vl_products = prods;
+          renderProducts();
+          populateSoProductSelect();
+        }
+      });
+      window.vanyaDB.subscribe(function(prods) {
+        if (prods && prods.length > 0) {
+          window.vl_products = prods;
+          renderProducts();
+          populateSoProductSelect();
+        }
+      });
+    }
+
+    // Set today's date as default for SO if empty
+    (function() {
+      var dateEl = document.getElementById('so-date');
+      if (dateEl && !dateEl.value) {
+        var today = new Date();
+        var yyyy = today.getFullYear();
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var dd = String(today.getDate()).padStart(2, '0');
+        dateEl.value = yyyy + '-' + mm + '-' + dd;
+      }
+    })();
   </script>
 </body>
 
