@@ -1,3 +1,10 @@
 {
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/VANYAPROD/index.html" },
+    { "source": "/productmanager", "destination": "/VANYAPROD/productmanager.html" },
+    { "source": "/vendormanager", "destination": "/VANYAPROD/vendormanager.html" },
+    { "source": "/assets/(.*)", "destination": "/VANYAPROD/assets/$1" },
+    { "source": "/(.*)", "destination": "/VANYAPROD/$1" }
+  ]
 }
