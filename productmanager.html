@@ -1022,10 +1022,11 @@
                 <th style="width:36px;">#</th>
                 <th>Product / Description</th>
                 <th>Code</th>
-                <th style="width:80px;">HSN</th>
-                <th style="width:70px;">Qty</th>
-                <th style="width:110px;">Unit Price (Rs.)</th>
-                <th style="width:120px;">Amount (Rs.)</th>
+                <th style="width:75px;">HSN</th>
+                <th style="width:60px;">Qty</th>
+                <th style="width:105px;">Unit Price (Ex-GST)</th>
+                <th style="width:65px;">GST %</th>
+                <th style="width:115px;">Amount (Incl. GST)</th>
                 <th style="width:36px;"></th>
               </tr>
             </thead>
@@ -1035,14 +1036,19 @@
 
         <!-- Totals -->
         <div class="so-summary" id="soSummary">
-          <div class="so-summary-row"><span>Subtotal</span><span id="soSubtotal">Rs. 0</span></div>
+          <div class="so-summary-row"><span>Subtotal (Incl. GST)</span><span id="soSubtotal">Rs. 0</span></div>
           <div class="so-summary-row">
             <span>Discount</span>
             <span>Rs. <input type="number" id="so-discount" value="0" min="0" style="width:80px;display:inline-block;" oninput="updateSoLinesCount()"></span>
           </div>
           <div class="so-summary-row">
-            <span>GST %</span>
-            <span><input type="number" id="so-gst-pct" value="18" min="0" max="100" step="0.5" style="width:60px;display:inline-block;" oninput="updateSoLinesCount()"> %</span>
+            <span>Default GST %</span>
+            <span><input type="number" id="so-gst-pct" value="18" min="0" max="100" step="0.5" style="width:60px;display:inline-block;" oninput="syncSoDataFromInputs()"> %</span>
+          </div>
+          <div class="so-summary-row"><span>Taxable Base (Ex-GST)</span><span id="soTaxable">Rs. 0</span></div>
+          <div class="so-summary-row">
+            <span>Total GST (Included)</span>
+            <span id="soGstAmount">Rs. 0</span>
           </div>
           <div class="so-summary-row total"><span>Grand Total</span><span id="soGrandTotal">Rs. 0</span></div>
         </div>
@@ -1862,19 +1868,24 @@
       var p = products.find(function(prod) { return String(prod.id) === String(productId); });
       if (!p) { toast('Product not found'); return; }
       var existing = soData.lines.find(function(l) { return l.productId === String(productId); });
+      var dispPrice = parseFloat(p.price) || 0;
+      var gstPct = parseFloat(soData.gstPct) || 18;
       if (existing) {
         existing.qty = (existing.qty || 1) + 1;
-        existing.amount = existing.qty * existing.unitPrice;
+        existing.amount = +(existing.qty * (existing.price || dispPrice)).toFixed(2);
         toast('Qty increased for ' + (p.name || 'product') + ' in Sales Order');
       } else {
+        var baseUnitPrice = gstPct > 0 ? +(dispPrice / (1 + gstPct / 100)).toFixed(2) : dispPrice;
         soData.lines.push({
           productId: String(productId),
           desc: p.name || '',
           code: p.code || '',
           hsn: p.hsn || '',
           qty: 1,
-          unitPrice: p.price || 0,
-          amount: p.price || 0
+          price: dispPrice,
+          gstPct: gstPct,
+          unitPrice: baseUnitPrice,
+          amount: dispPrice
         });
         toast((p.name || 'Product') + ' added to Sales Order');
       }
@@ -1887,7 +1898,8 @@
     }
 
     function addBlankSoLine() {
-      soData.lines.push({ productId: '', desc: '', code: '', hsn: '', qty: 1, unitPrice: 0, amount: 0 });
+      var gstPct = parseFloat(soData.gstPct) || 18;
+      soData.lines.push({ productId: '', desc: '', code: '', hsn: '', qty: 1, price: 0, gstPct: gstPct, unitPrice: 0, amount: 0 });
       saveSoData();
       renderSoLines();
       updateSoLinesCount();
@@ -1908,12 +1920,39 @@
     }
 
     function soLineChanged(idx, field, value) {
-      if (!soData.lines[idx]) return;
-      soData.lines[idx][field] = field === 'qty' || field === 'unitPrice' ? (parseFloat(value) || 0) : value;
-      soData.lines[idx].amount = (soData.lines[idx].qty || 0) * (soData.lines[idx].unitPrice || 0);
+      var line = soData.lines[idx];
+      if (!line) return;
+      if (field === 'desc' || field === 'code' || field === 'hsn') {
+        line[field] = value;
+      } else if (field === 'qty') {
+        line.qty = Math.max(1, parseFloat(value) || 1);
+        line.amount = +(line.qty * (line.price || 0)).toFixed(2);
+        var amtInput = document.getElementById('so-line-amt-' + idx);
+        if (amtInput) amtInput.value = line.amount;
+      } else if (field === 'amount') {
+        var totalAmt = parseFloat(value) || 0;
+        line.amount = totalAmt;
+        line.price = +(totalAmt / (line.qty || 1)).toFixed(2);
+        var r = (parseFloat(line.gstPct) || 0) / 100;
+        line.unitPrice = r > 0 ? +(line.price / (1 + r)).toFixed(2) : line.price;
+        var upInput = document.getElementById('so-line-up-' + idx);
+        if (upInput) upInput.value = line.unitPrice;
+      } else if (field === 'unitPrice') {
+        var up = parseFloat(value) || 0;
+        line.unitPrice = up;
+        var r = (parseFloat(line.gstPct) || 0) / 100;
+        line.price = +(up * (1 + r)).toFixed(2);
+        line.amount = +(line.qty * line.price).toFixed(2);
+        var amtInput = document.getElementById('so-line-amt-' + idx);
+        if (amtInput) amtInput.value = line.amount;
+      } else if (field === 'gstPct') {
+        line.gstPct = parseFloat(value) || 0;
+        var r = line.gstPct / 100;
+        line.unitPrice = r > 0 ? +((line.price || 0) / (1 + r)).toFixed(2) : (line.price || 0);
+        var upInput = document.getElementById('so-line-up-' + idx);
+        if (upInput) upInput.value = line.unitPrice;
+      }
       saveSoData();
-      var amtCell = document.getElementById('so-line-amt-' + idx);
-      if (amtCell) amtCell.textContent = 'Rs. ' + Number(soData.lines[idx].amount).toLocaleString('en-IN');
       updateSoLinesCount();
     }
 
@@ -1921,18 +1960,28 @@
       var tbody = document.getElementById('soLinesBody');
       if (!tbody) return;
       if (!soData.lines.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--lichen);padding:24px;">No items added yet. Use Quick Add or click &quot;+ Add Line&quot;.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--lichen);padding:24px;">No items added yet. Use Quick Add or click &quot;+ Add Line&quot;.</td></tr>';
         return;
       }
       tbody.innerHTML = soData.lines.map(function(line, i) {
+        var gstVal = line.gstPct != null ? line.gstPct : (soData.gstPct || 18);
+        var amt = line.amount != null ? line.amount : (line.qty * (line.unitPrice || 0));
+        var price = line.price != null ? line.price : (amt / (line.qty || 1));
+        var r = (parseFloat(gstVal) || 0) / 100;
+        var up = line.unitPrice != null ? line.unitPrice : (r > 0 ? +(price / (1 + r)).toFixed(2) : price);
+        line.gstPct = gstVal;
+        line.price = price;
+        line.unitPrice = up;
+        line.amount = amt;
         return '<tr>'
           + '<td style="color:var(--lichen);">' + (i + 1) + '</td>'
           + '<td><input type="text" value="' + (line.desc || '') + '" placeholder="Product / description" oninput="soLineChanged(' + i + ',\'desc\',this.value)"></td>'
-          + '<td><input type="text" value="' + (line.code || '') + '" placeholder="Code" style="width:90px;" oninput="soLineChanged(' + i + ',\'code\',this.value)"></td>'
-          + '<td><input type="text" value="' + (line.hsn || '') + '" placeholder="HSN" style="width:70px;" oninput="soLineChanged(' + i + ',\'hsn\',this.value)"></td>'
-          + '<td><input type="number" value="' + (line.qty || 1) + '" min="1" style="width:60px;" oninput="soLineChanged(' + i + ',\'qty\',this.value)"></td>'
-          + '<td><input type="number" value="' + (line.unitPrice || 0) + '" min="0" style="width:100px;" oninput="soLineChanged(' + i + ',\'unitPrice\',this.value)"></td>'
-          + '<td id="so-line-amt-' + i + '" style="color:var(--caramel);font-weight:600;">Rs. ' + Number(line.amount || 0).toLocaleString('en-IN') + '</td>'
+          + '<td><input type="text" value="' + (line.code || '') + '" placeholder="Code" style="width:75px;" oninput="soLineChanged(' + i + ',\'code\',this.value)"></td>'
+          + '<td><input type="text" value="' + (line.hsn || '') + '" placeholder="HSN" style="width:65px;" oninput="soLineChanged(' + i + ',\'hsn\',this.value)"></td>'
+          + '<td><input type="number" value="' + (line.qty || 1) + '" min="1" style="width:55px;" oninput="soLineChanged(' + i + ',\'qty\',this.value)"></td>'
+          + '<td><input type="number" id="so-line-up-' + i + '" value="' + up + '" min="0" step="any" style="width:95px;" oninput="soLineChanged(' + i + ',\'unitPrice\',this.value)" title="Unit Price (Ex-GST)"></td>'
+          + '<td><input type="number" value="' + gstVal + '" min="0" max="100" step="0.5" style="width:50px;" oninput="soLineChanged(' + i + ',\'gstPct\',this.value)">%</td>'
+          + '<td><input type="number" id="so-line-amt-' + i + '" value="' + amt + '" min="0" step="any" style="width:105px;color:var(--caramel);font-weight:600;" oninput="soLineChanged(' + i + ',\'amount\',this.value)" title="Amount (Incl. GST)"></td>'
           + '<td><button type="button" onclick="removeSoLine(' + i + ')" style="background:none;border:none;color:#e07060;cursor:pointer;font-size:16px;" title="Remove">&#10005;</button></td>'
           + '</tr>';
       }).join('');
@@ -1940,21 +1989,38 @@
 
     function updateSoLinesCount() {
       var discEl = document.getElementById('so-discount');
-      var gstEl = document.getElementById('so-gst-pct');
-      soData.discount = discEl ? (parseFloat(discEl.value) || 0) : soData.discount;
-      soData.gstPct = gstEl ? (parseFloat(gstEl.value) || 0) : soData.gstPct;
+      soData.discount = discEl ? (parseFloat(discEl.value) || 0) : (soData.discount || 0);
 
-      var subtotal = soData.lines.reduce(function(acc, l) { return acc + (l.amount || 0); }, 0);
-      var afterDisc = subtotal - (soData.discount || 0);
-      var gstAmt = afterDisc * ((soData.gstPct || 0) / 100);
-      var grandTotal = afterDisc + gstAmt;
+      var subtotal = 0;
+      var totalTaxable = 0;
+      var totalGst = 0;
+
+      soData.lines.forEach(function(l) {
+        var lAmt = +(l.amount || 0);
+        var r = (parseFloat(l.gstPct != null ? l.gstPct : (soData.gstPct || 18)) || 0) / 100;
+        var lTaxable = r > 0 ? +(lAmt / (1 + r)) : lAmt;
+        var lGst = lAmt - lTaxable;
+        subtotal += lAmt;
+        totalTaxable += lTaxable;
+        totalGst += lGst;
+      });
+
+      var disc = soData.discount || 0;
+      var grandTotal = Math.max(0, subtotal - disc);
+      var ratio = subtotal > 0 ? (grandTotal / subtotal) : 1;
+      var taxableAfterDisc = totalTaxable * ratio;
+      var gstAfterDisc = totalGst * ratio;
 
       var cntEl = document.getElementById('soLineCount');
       if (cntEl) cntEl.textContent = '(' + soData.lines.length + ' item' + (soData.lines.length !== 1 ? 's' : '') + ')';
       var subEl = document.getElementById('soSubtotal');
-      if (subEl) subEl.textContent = 'Rs. ' + subtotal.toLocaleString('en-IN');
+      if (subEl) subEl.textContent = 'Rs. ' + subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      var taxEl = document.getElementById('soTaxable');
+      if (taxEl) taxEl.textContent = 'Rs. ' + taxableAfterDisc.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      var gstEl = document.getElementById('soGstAmount');
+      if (gstEl) gstEl.textContent = 'Rs. ' + gstAfterDisc.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
       var totalEl = document.getElementById('soGrandTotal');
-      if (totalEl) totalEl.textContent = 'Rs. ' + grandTotal.toLocaleString('en-IN');
+      if (totalEl) totalEl.textContent = 'Rs. ' + grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
       saveSoData();
     }
 
@@ -2007,8 +2073,7 @@
       var c = soData.customer || {};
       var metaParts = [
         soData.date ? 'Date: ' + soData.date : '',
-        soData.leadTime ? 'Lead time: ' + soData.leadTime : '',
-        c.name ? 'Prepared for: ' + c.name : ''
+        soData.leadTime ? 'Lead time: ' + soData.leadTime : ''
       ].filter(Boolean);
       txt(metaParts.join('     ') || '', L);
       y += 8;
@@ -2063,32 +2128,44 @@
         d.setFillColor(235, 238, 243); d.rect(L, y - 4.5, R - L, 7, 'F');
         d.setTextColor(0, 0, 0);
         txt('#', L + 1);
-        txt('Description / Product', L + 8);
-        txt('Code', L + 72);
-        txt('HSN', L + 94);
-        txt('Qty', 138, { align: 'right' });
-        txt('Unit Price', 166, { align: 'right' });
+        txt('Description / Product', L + 7);
+        txt('Code', L + 62);
+        txt('HSN', L + 86);
+        txt('Qty', 118, { align: 'right' });
+        txt('Unit Price', 148, { align: 'right' });
+        txt('GST', 166, { align: 'right' });
         txt('Amount', R - 1, { align: 'right' });
         y += 7; d.setFont('helvetica', 'normal'); d.setFontSize(9);
       };
 
       hdr();
       var sub = 0;
+      var totalTaxable = 0;
+      var totalGst = 0;
 
       soData.lines.forEach(function(line, i) {
-        var amt = (+line.qty || 0) * (+line.unitPrice || 0);
-        sub += amt;
-        var desc = d.splitTextToSize(line.desc || '-', 60);
+        var r = (parseFloat(line.gstPct != null ? line.gstPct : (soData.gstPct || 18)) || 0) / 100;
+        var lAmt = +(line.amount != null ? line.amount : ((line.qty || 1) * (line.unitPrice || 0)));
+        var lTaxable = r > 0 ? +(lAmt / (1 + r)) : lAmt;
+        var lGst = lAmt - lTaxable;
+        var upExGst = (line.qty || 1) > 0 ? (lTaxable / (line.qty || 1)) : lTaxable;
+
+        sub += lAmt;
+        totalTaxable += lTaxable;
+        totalGst += lGst;
+
+        var desc = d.splitTextToSize(line.desc || '-', 54);
         var rowH = Math.max(desc.length, 1) * 4.6 + 2;
         if (y + rowH > H - 40) { d.addPage(); y = 18; hdr(); }
         d.setTextColor(0, 0, 0);
         txt(i + 1, L + 1);
-        d.text(desc, L + 8, y);
-        txt(line.code || '-', L + 72);
-        txt(line.hsn || '-', L + 94);
-        txt(line.qty || 1, 138, { align: 'right' });
-        txt(rs(line.unitPrice || 0), 166, { align: 'right' });
-        txt(rs(amt), R - 1, { align: 'right' });
+        d.text(desc, L + 7, y);
+        txt(line.code || '-', L + 62);
+        txt(line.hsn || '-', L + 86);
+        txt(line.qty || 1, 118, { align: 'right' });
+        txt(rs(upExGst), 148, { align: 'right' });
+        txt((line.gstPct != null ? line.gstPct : (soData.gstPct || 18)) + '%', 166, { align: 'right' });
+        txt(rs(lAmt), R - 1, { align: 'right' });
         y += rowH;
         d.setDrawColor(217, 221, 227); d.line(L, y - 3.2, R, y - 3.2);
       });
@@ -2097,20 +2174,21 @@
 
       if (y > H - 45) { d.addPage(); y = 18; }
 
-      // ── Totals (matches PO style) ──
+      // ── Totals (Reverse GST: Display Amount includes GST) ──
       var disc = soData.discount || 0;
-      var gstPct = soData.gstPct || 0;
-      var afterDisc = sub - disc;
-      var gstAmt = afterDisc * (gstPct / 100);
-      var grandTotal = afterDisc + gstAmt;
+      var grandTotal = Math.max(0, sub - disc);
+      var ratio = sub > 0 ? (grandTotal / sub) : 1;
+      var taxable = totalTaxable * ratio;
+      var gstAmt = totalGst * ratio;
 
       y += 4;
       d.setFont('helvetica', 'normal'); d.setFontSize(9); d.setTextColor(0, 0, 0);
-      txt('Subtotal', 150, { align: 'right' }); txt(rs(sub), R - 1, { align: 'right' }); y += 5.5;
+      txt('Subtotal (Incl. GST)', 150, { align: 'right' }); txt(rs(sub), R - 1, { align: 'right' }); y += 5.5;
       if (disc > 0) {
         txt('Discount', 150, { align: 'right' }); txt('- ' + rs(disc), R - 1, { align: 'right' }); y += 5.5;
       }
-      txt('GST ' + gstPct + '%', 150, { align: 'right' }); txt(rs(gstAmt), R - 1, { align: 'right' }); y += 6;
+      txt('Taxable Base (Ex-GST)', 150, { align: 'right' }); txt(rs(taxable), R - 1, { align: 'right' }); y += 5.5;
+      txt('Total GST', 150, { align: 'right' }); txt(rs(gstAmt), R - 1, { align: 'right' }); y += 6;
       d.setFont('helvetica', 'bold'); d.setFontSize(11);
       txt('Grand Total', 150, { align: 'right' }); txt(rs(grandTotal), R - 1, { align: 'right' }); y += 9;
 
@@ -2128,16 +2206,13 @@
       para('Lead time', soData.leadTime);
       para('Notes / remarks', soData.notes);
 
-      // ── Footer signature block ──
+      // ── Footer company block & Stamp ──
       if (y > H - 68) { d.addPage(); y = 18; }
       y += 3;
       d.setFont('helvetica', 'bold'); d.setFontSize(9); d.setTextColor(0, 0, 0);
       txt('Vanya Living', L);
       txt('vanya.living.care@gmail.com', L + 50);
-      y += 14;
-      d.setDrawColor(120, 120, 120); d.line(R - 60, y, R, y); y += 4.5;
-      d.setFont('helvetica', 'normal'); txt('Authorized signatory', R, { align: 'right' });
-      y += 3;
+      y += 10;
 
       // ── Stamp ──
       try { d.addImage(STAMP, 'PNG', R - 24 * STAMP_R, y, 24 * STAMP_R, 24); } catch(e) {} y += 24;

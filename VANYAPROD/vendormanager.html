@@ -68,7 +68,7 @@ header{display:flex;justify-content:space-between;gap:12px;align-items:center;fl
  <div class="row" style="margin-top:10px;align-items:center"><button class="b p" id="addsel" disabled>Add selected to PO (0)</button><button class="b" id="viewpo">View PO (0 lines) →</button><span class="mt" id="addmsg"></span></div></div>
  <div class="card"><div class="w"><table><thead><tr><th style="width:32px"><input type="checkbox" id="all" title="Select all shown" style="width:auto"></th><th>Code</th><th>Type</th><th>Drawing</th><th>PDF</th><th>HTML</th><th>Material</th><th class="n">Cost (₹)</th><th></th></tr></thead><tbody id="lb"></tbody></table></div>
  <p class="mt" id="lc"></p></div>
- <p class="mt">Material and cost edits here are saved in this browser. PDF links open the file from your Google Drive (you must be signed in).</p>
+ <p class="mt">Costs and materials are fetched from SolidWorks (.sldprt / .sldasm) custom file properties and Google Drive metadata, and stored locally in this browser (not in Firestore). PDF links open the file from your Google Drive.</p>
 </section>
 
 <section class="pane" id="po">
@@ -169,8 +169,10 @@ const save=()=>{
  if(db){
   clearTimeout(tm);sync('Saving…');
   tm=setTimeout(()=>{
+   const stForCloud=Object.assign({},JSON.parse(JSON.stringify(st)));
+   delete stForCloud.meta; // Cost data stays local and in file properties only, NOT in Firestore
    db.collection('vendor_portal').doc('portal_state')
-     .set(JSON.parse(JSON.stringify(st)),{merge:true})
+     .set(stForCloud,{merge:true})
      .then(()=>sync('🟢 Cloud Synced (Firestore)'))
      .catch(err=>{console.warn('Cloud save error:',err);sync('💾 Local Saved')});
   },500);
@@ -215,7 +217,7 @@ $('lb').onchange=e=>{const c=e.target.dataset.sel;if(c){e.target.checked?sel.add
 $('all').onchange=e=>{vis.forEach(c=>e.target.checked?sel.add(c):sel.delete(c));rLib()};
 $('addsel').onclick=()=>{addToPo([...sel]);sel.clear();rLib()};
 $('viewpo').onclick=()=>go('po');
-$('lb').oninput=e=>{const d=e.target.dataset;if(!d.c)return;M(d.c)[d.k]=d.k==='cost'?+e.target.value:e.target.value;save()};
+$('lb').oninput=e=>{const d=e.target.dataset;if(!d.c)return;M(d.c)[d.k]=d.k==='cost'?+e.target.value:e.target.value;save();if(d.k==='cost'||d.k==='mat')saveCostToDrive(d.c,M(d.c).cost,M(d.c).mat)};
 
 // PO
 const F=['pn','pd','pv','vn','vg','vc','va','sa','gp','tn','vk','vp','pr','bt','ba','sn','ptm','txm','spt','og','oc','as','rm','op'];
@@ -313,16 +315,26 @@ async function boot(){
    const docRef=db.collection('vendor_portal').doc('portal_state');
    const snap=await docRef.get();
    if(snap.exists){
-    st=Object.assign({meta:{},bom:{},po:[],f:{},custom:[],vendors:[]},snap.data());
+    const cloudData=snap.data()||{};
+    delete cloudData.meta; // Do not overwrite cost from Firestore
+    const localMeta=Object.assign({},st.meta||{});
+    st=Object.assign({meta:{},bom:{},po:[],f:{},custom:[],vendors:[]},st,cloudData);
+    st.meta=Object.assign(localMeta,st.meta||{});
     reg();refreshSel();applyF();
     sync('🟢 Cloud Synced (Firestore)');
    } else {
-    await docRef.set(JSON.parse(JSON.stringify(st)));
+    const stForCloud=Object.assign({},JSON.parse(JSON.stringify(st)));
+    delete stForCloud.meta;
+    await docRef.set(stForCloud);
     sync('🟢 Cloud Synced (Firestore)');
    }
    docRef.onSnapshot(doc=>{
     if(doc.exists && !doc.metadata.hasPendingWrites){
-     st=Object.assign({meta:{},bom:{},po:[],f:{},custom:[],vendors:[]},doc.data());
+     const cloudData=doc.data()||{};
+     delete cloudData.meta; // Do not overwrite cost from Firestore
+     const localMeta=Object.assign({},st.meta||{});
+     st=Object.assign({meta:{},bom:{},po:[],f:{},custom:[],vendors:[]},st,cloudData);
+     st.meta=Object.assign(localMeta,st.meta||{});
      reg();refreshSel();applyF();
      const t=document.querySelector('.pane.on');if(t)go(t.id);
      sync('🟢 Cloud Synced (Firestore)');
@@ -428,9 +440,100 @@ const extractDriveId=v=>{
  return m?(m[1]||m[2]||m[3]||m[0]):v.trim();
 };
 
+// ---- SolidWorks (.sldprt / .sldasm) Custom Property Parser ----
+function parseSolidWorksCustomProps(buf){
+ if(!buf||buf.byteLength<32)return{};
+ const res={};
+ try{
+  const u8=new Uint8Array(buf);
+  const str16=new TextDecoder('utf-16le',{fatal:false}).decode(u8);
+  const str8=new TextDecoder('latin1').decode(u8);
+  
+  // Custom property: Cost / Unit Cost / Total Cost / Price
+  const costRegexes=[
+   /(?:Cost|Unit\s*Cost|Total\s*Cost|Price|Estimated\s*Cost)[^\w\d\n\r]{1,32}?([0-9]+(?:\.[0-9]+)?)/i,
+   /(?:Cost|Price)[:=\s]+([0-9]+(?:\.[0-9]+)?)/i
+  ];
+  for(const re of costRegexes){
+   const m=str16.match(re)||str8.match(re);
+   if(m&&m[1]){
+    const val=parseFloat(m[1]);
+    if(!isNaN(val)&&val>0){res.cost=val;break;}
+   }
+  }
+
+  // Custom property: Material / Mat
+  const matRegexes=[
+   /(?:Material|Mat)[^\w\d\n\r]{1,32}?([A-Za-z0-9_\-\s]{2,40})/i,
+   /(?:Material|Mat)[:=\s]+([A-Za-z0-9_\-\s]{2,40})/i
+  ];
+  for(const re of matRegexes){
+   const m=str16.match(re)||str8.match(re);
+   if(m&&m[1]){
+    const val=m[1].trim().replace(/[\x00-\x1f]/g,'');
+    if(val&&!/^(Cost|Price|Date|Number|String|Property|Custom)$/i.test(val)){
+     res.mat=val;break;
+    }
+   }
+  }
+ }catch(e){console.warn('SolidWorks CAD prop parse error:',e);}
+ return res;
+}
+
+// Extract properties from Google Drive file metadata (properties, appProperties, description)
+function extractPropsFromDriveMeta(f){
+ const res={};
+ if(f.properties){
+  const c=f.properties.Cost||f.properties.cost||f.properties.Price||f.properties.price||f.properties['Unit Cost']||f.properties['Total Cost'];
+  if(c!=null&&!isNaN(parseFloat(c)))res.cost=parseFloat(c);
+  const m=f.properties.Material||f.properties.material||f.properties.Mat||f.properties.mat;
+  if(m)res.mat=String(m).trim();
+ }
+ if(f.appProperties){
+  const c=f.appProperties.Cost||f.appProperties.cost||f.appProperties.Price;
+  if(c!=null&&!isNaN(parseFloat(c))&&res.cost==null)res.cost=parseFloat(c);
+  const m=f.appProperties.Material||f.appProperties.material;
+  if(m&&!res.mat)res.mat=String(m).trim();
+ }
+ if(f.description){
+  try{
+   const d=JSON.parse(f.description);
+   if(d.cost!=null&&res.cost==null)res.cost=parseFloat(d.cost);
+   if(d.mat&&!res.mat)res.mat=d.mat;
+  }catch(e){
+   const cm=f.description.match(/(?:cost|price)[:=\s]+([0-9.]+)/i);
+   if(cm&&res.cost==null)res.cost=parseFloat(cm[1]);
+   const mm=f.description.match(/mat(?:erial)?[:=\s]+([^\n,]+)/i);
+   if(mm&&!res.mat)res.mat=mm[1].trim();
+  }
+ }
+ return res;
+}
+
+// Save cost and material back to Google Drive file properties (PATCH)
+async function saveCostToDrive(code,cost,mat){
+ if(!st.googleToken)return;
+ const fileId=st.driveFileIds&&st.driveFileIds[code];
+ if(!fileId)return;
+ try{
+  await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`,{
+   method:'PATCH',
+   headers:{
+    Authorization:'Bearer '+st.googleToken,
+    'Content-Type':'application/json'
+   },
+   body:JSON.stringify({
+    properties:{Cost:String(cost||0),Material:String(mat||'')},
+    description:JSON.stringify({cost:cost||0,mat:mat||''})
+   })
+  });
+ }catch(e){console.warn('Drive cost save failed:',e);}
+}
+
 // ---- Process CAD Files (SolidWorks .sldprt/.sldasm/.slddrw, PDF, 3D HTML) ----
 function processScannedCadFiles(fileList){
  let parts=0,assys=0,drawings=0,pdfs=0,htmls=0;
+ st.driveFileIds=st.driveFileIds||{};
  fileList.forEach(f=>{
   const raw=f.name||'';
   const m=raw.match(/\.([a-zA-Z0-9]+)$/);
@@ -438,6 +541,13 @@ function processScannedCadFiles(fileList){
   const ext=m[1].toLowerCase();
   const c=raw.slice(0,-m[0].length).trim();
   if(!c)return;
+
+  if(f.id)st.driveFileIds[c]=f.id;
+
+  // Extract custom properties from Drive file metadata
+  const metaProps=extractPropsFromDriveMeta(f);
+  if(metaProps.cost!=null&&metaProps.cost>0)M(c).cost=metaProps.cost;
+  if(metaProps.mat&&!G(c).mat)M(c).mat=metaProps.mat;
 
   if(['sldprt','prt','step','stp'].includes(ext)){
    if(!FILES[c]){FILES[c]=['P',0,0];if(!codes.includes(c))codes.push(c)}
@@ -472,7 +582,7 @@ function processScannedCadFiles(fileList){
 
 // ---- Google OAuth (GIS Token Model) ----
 const GOOGLE_CLIENT_ID = '912019339731-r09peub8k1ku6kfmofhj0diuesf44r8b.apps.googleusercontent.com';
-const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.metadata https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 let gisTokenClient = null;
 
 function clearLibraryCache() {
@@ -485,7 +595,7 @@ function clearLibraryCache() {
  st.pdf = {};
  st.html = {};
  st.drv = {};
- st.meta = {};
+ // Note: st.meta is preserved so custom costs/materials are not wiped
  save();
  rLib();
 }
@@ -578,7 +688,7 @@ async function scanGoogleDrive(folderInput, apiKeyInput){
      let pageToken = '';
      do {
       const q = `'${curFolder}' in parents and trashed = false`;
-      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true${pageToken?'&pageToken='+pageToken:''}`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink,description,properties,appProperties)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true${pageToken?'&pageToken='+pageToken:''}`;
       const res = await fetch(url, { headers });
       const data = await res.json();
       if(!res.ok) throw new Error(data.error?.message || 'Drive API error');
@@ -597,7 +707,7 @@ async function scanGoogleDrive(folderInput, apiKeyInput){
     let pageToken = '';
     do {
      const q = "trashed = false and (name contains '.sldprt' or name contains '.sldasm' or name contains '.slddrw' or name contains '.step' or name contains '.stp' or name contains '.pdf' or name contains '.html')";
-     const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true${pageToken?'&pageToken='+pageToken:''}`;
+     const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink,description,properties,appProperties)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true${pageToken?'&pageToken='+pageToken:''}`;
      const res = await fetch(url, { headers });
      const data = await res.json();
      if(!res.ok) throw new Error(data.error?.message || 'Drive API error');
@@ -663,17 +773,63 @@ async function scanGoogleDrive(folderInput, apiKeyInput){
  if(statusEl) statusEl.innerHTML = `<span style="color:var(--ok)">✓ ${summary}</span>`;
  if(rfmEl) rfmEl.textContent = `Drive synced: ${stats.parts} parts, ${stats.assys} assys ✓`;
  setTimeout(()=>{ if($('driveModal')) $('driveModal').style.display='none'; }, 2000);
+
+ // Background fetch custom properties from .sldprt / .sldasm files on Drive if cost was not in Drive metadata
+ const sldFiles = cadFiles.filter(f => {
+  const m = (f.name||'').match(/\.(sldprt|sldasm)$/i);
+  if (!m) return false;
+  const c = f.name.slice(0, -m[0].length).trim();
+  return !G(c).cost;
+ });
+ if(sldFiles.length > 0 && st.googleToken){
+  (async () => {
+   let updated = false;
+   for(const sf of sldFiles.slice(0, 30)){
+    try {
+     const m = sf.name.match(/\.(sldprt|sldasm)$/i);
+     const c = sf.name.slice(0, -m[0].length).trim();
+     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${sf.id}?alt=media`, {
+      headers: { Authorization: 'Bearer ' + st.googleToken, Range: 'bytes=0-131071' }
+     });
+     if(res.ok){
+      const buf = await res.arrayBuffer();
+      const props = parseSolidWorksCustomProps(buf);
+      if(props.cost != null && props.cost > 0){ M(c).cost = props.cost; updated = true; }
+      if(props.mat && !G(c).mat){ M(c).mat = props.mat; updated = true; }
+     }
+    } catch(e) { console.warn('Drive CAD prop fetch err:', e); }
+   }
+   if(updated){ save(); rLib(); }
+  })();
+ }
+
  return true;
 }
 
 // Drive Modal Button Wiring
 $('drv_scan_btn').onclick=()=>scanGoogleDrive($('drv_folder').value,$('drv_key').value);
 $('drv_local_btn').onclick=()=>$('cad_dir_input').click();
-$('cad_dir_input').onchange=e=>{
+$('cad_dir_input').onchange=async e=>{
  const files=Array.from(e.target.files||[]);
  if(!files.length)return;
  const fileList=files.map(f=>({name:f.name,id:f.name}));
  const stats=processScannedCadFiles(fileList);
+ for(const f of files){
+  const m=(f.name||'').match(/\.([a-zA-Z0-9]+)$/);
+  if(!m)continue;
+  const ext=m[1].toLowerCase();
+  const c=f.name.slice(0,-m[0].length).trim();
+  if(!c)continue;
+  if(['sldprt','sldasm','prt','asm'].includes(ext)){
+   try {
+    const slice = await f.slice(0, 131072).arrayBuffer();
+    const props = parseSolidWorksCustomProps(slice);
+    if(props.cost != null && props.cost > 0) M(c).cost = props.cost;
+    if(props.mat && !G(c).mat) M(c).mat = props.mat;
+   } catch(err){ console.warn('Local CAD parse err:', err); }
+  }
+ }
+ save();rLib();
  const summary=`Local CAD scan ✓ Found ${fileList.length} files (${stats.parts} parts, ${stats.assys} assys, ${stats.drawings} drawings, ${stats.pdfs} PDFs)`;
  $('drv_status').innerHTML=`<span style="color:var(--ok)">✓ ${summary}</span>`;
  $('rfm').textContent=`Local CAD Synced (${fileList.length} files) ✓`;
