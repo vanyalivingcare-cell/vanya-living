@@ -394,16 +394,16 @@ function mkPdf(){
  const col=(x,items)=>{let yy=y;items.forEach(([t,ls])=>{if(!ls.length)return;d.setFont('helvetica','bold');d.text(t,x,yy);yy+=5;d.setFont('helvetica','normal');d.text(ls,x,yy);yy+=ls.length*4.6+1.5});return yy};
  y=Math.max(col(L,[['Vendor',vl]]),col(108,[['Bill to',bl],['Ship to',sl]]))+4;
  const hdr=()=>{d.setFont('helvetica','bold');d.setFontSize(9);d.setFillColor(235,238,243);d.rect(L,y-4.5,R-L,7,'F');
-  txt('#',L+1);txt('Part code',L+8);txt('Description / material',L+34);txt('PDF link',94);txt('HTML link',115);txt('Qty',138,{align:'right'});txt('Rate',166,{align:'right'});txt('Amount',R-1,{align:'right'});
+  txt('#',L+1);txt('Part code',L+8);txt('Description / material',L+34);txt('PDF link',92);txt('HTML link',115);txt('Qty',144,{align:'right'});txt('Rate',168,{align:'right'});txt('Amount',R-1,{align:'right'});
   y+=7;d.setFont('helvetica','normal')};
  hdr();let sub=0;
  st.po.forEach((r,i)=>{const amt=(+r.q||0)*(+r.r||0);sub+=amt;
-  const desc=d.splitTextToSize(G(r.c).mat||'-',42),h=Math.max(desc.length,1)*4.6+2;
+  const desc=d.splitTextToSize(G(r.c).mat||'-',40),h=Math.max(desc.length,1)*4.6+2;
   if(y+h>H-40){d.addPage();y=18;hdr()}
   txt(i+1,L+1);txt(r.c,L+8);d.text(desc,L+34,y);
-  if(PDF[r.c]){d.setTextColor(11,95,255);d.textWithLink('Open PDF',94,y,{url:'https://drive.google.com/file/d/'+PDF[r.c]+'/view'});d.setTextColor(0,0,0)}else txt('-',94);
-  if(HTML[r.c]){d.setTextColor(11,95,255);d.textWithLink('Download HTML',115,y,{url:htmlDownloadUrl(r.c)});d.setTextColor(0,0,0)}else txt('-',115);
-  txt(r.q,138,{align:'right'});txt(rs(r.r),166,{align:'right'});txt(rs(amt),R-1,{align:'right'});
+  if(PDF[r.c]){d.setTextColor(11,95,255);d.textWithLink(r.c+'.pdf',92,y,{url:'https://drive.google.com/file/d/'+PDF[r.c]+'/view'});d.setTextColor(0,0,0)}else txt('-',92);
+  if(HTML[r.c]){d.setTextColor(11,95,255);d.textWithLink(r.c+'.html',115,y,{url:htmlDownloadUrl(r.c)});d.setTextColor(0,0,0)}else txt('-',115);
+  txt(r.q,144,{align:'right'});txt(rs(r.r),168,{align:'right'});txt(rs(amt),R-1,{align:'right'});
   y+=h;d.setDrawColor(217,221,227);d.line(L,y-3.2,R,y-3.2)});
  if(!st.po.length){txt('No lines',L+1);y+=6}
  if(y>H-45){d.addPage();y=18}
