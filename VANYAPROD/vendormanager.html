@@ -659,28 +659,185 @@ async function saveCostToDrive(code,cost,mat){
 }
 
 // ---- SolidWorks (.sldasm) Assembly BOM File Analyzer ----
-function analyzeSldasmBuffer(buf,assyCode,knownCodes){
+function decodeAllTexts(u8){
+ const out=[];
+ try{out.push(new TextDecoder('latin1').decode(u8));}catch(e){}
+ try{out.push(new TextDecoder('utf-16le',{fatal:false}).decode(u8));}catch(e){}
+ if(u8.byteLength>1){
+  try{out.push(new TextDecoder('utf-16le',{fatal:false}).decode(u8.subarray(1)));}catch(e){}
+ }
+ return out;
+}
+
+async function tryInflateZlib(u8){
+ if(typeof DecompressionStream==='undefined'||u8.byteLength<8)return null;
+ const chunks=[];
+ try{
+  const ds=new DecompressionStream('deflate');
+  const writer=ds.writable.getWriter();
+  const reader=ds.readable.getReader();
+  const readPromise=(async()=>{
+   try{
+    while(true){
+     const {value,done}=await reader.read();
+     if(done)break;
+     if(value)chunks.push(value);
+    }
+   }catch(e){}
+  })();
+  writer.write(u8).catch(()=>{});
+  writer.close().catch(()=>{});
+  await readPromise;
+ }catch(e){}
+ if(!chunks.length)return null;
+ const total=chunks.reduce((s,c)=>s+c.byteLength,0);
+ if(!total)return null;
+ const out=new Uint8Array(total);
+ let off=0;
+ for(const c of chunks){out.set(c,off);off+=c.byteLength;}
+ return out;
+}
+
+function extractOleStreams(buf){
+ const streams=[];
+ try{
+  const u8=new Uint8Array(buf);
+  if(u8.byteLength<512)return streams;
+  // Check OLE2 magic D0 CF 11 E0 A1 B1 1A E1
+  if(u8[0]!==0xD0||u8[1]!==0xCF||u8[2]!==0x11||u8[3]!==0xE0)return streams;
+  const view=new DataView(buf);
+  const sectorShift=view.getUint16(30,true);
+  const secSize=1<<sectorShift;
+  const dirStart=view.getInt32(48,true);
+  const fatCount=view.getInt32(44,true);
+  if(secSize<64||secSize>65536)return streams;
+
+  // Build FAT (File Allocation Table)
+  const fat=[];
+  const difat=[];
+  for(let i=0;i<109;i++){
+   const s=view.getInt32(76+i*4,true);
+   if(s>=0)difat.push(s);
+  }
+  for(let i=0;i<Math.min(fatCount,difat.length);i++){
+   const off=(difat[i]+1)*secSize;
+   if(off+secSize>u8.byteLength)break;
+   for(let j=0;j<secSize;j+=4)fat.push(view.getInt32(off+j,true));
+  }
+
+  const readChain=(startSec,maxBytes=8*1024*1024)=>{
+   const parts=[];
+   let s=startSec,len=0,guard=0;
+   const seen=new Set();
+   while(s>=0&&s<fat.length&&!seen.has(s)&&len<maxBytes&&guard++<20000){
+    seen.add(s);
+    const off=(s+1)*secSize;
+    if(off+secSize>u8.byteLength)break;
+    parts.push(u8.subarray(off,off+secSize));
+    len+=secSize;
+    s=fat[s];
+   }
+   const out=new Uint8Array(len);
+   let o=0;for(const p of parts){out.set(p,o);o+=p.byteLength;}
+   return out;
+  };
+
+  // Read Directory Stream
+  const dirBytes=readChain(dirStart,512*1024);
+  const dirView=new DataView(dirBytes.buffer,dirBytes.byteOffset,dirBytes.byteLength);
+  let rootMiniBytes=null;
+  const miniFat=[];
+  const miniStart=view.getInt32(60,true);
+  if(miniStart>=0){
+   const mfBytes=readChain(miniStart,512*1024);
+   const mfView=new DataView(mfBytes.buffer,mfBytes.byteOffset,mfBytes.byteLength);
+   for(let i=0;i+4<=mfBytes.byteLength;i+=4)miniFat.push(mfView.getInt32(i,true));
+  }
+
+  const readMiniChain=(startSec,size)=>{
+   if(!rootMiniBytes||startSec<0)return new Uint8Array(0);
+   const out=new Uint8Array(size);
+   let s=startSec,o=0,guard=0;
+   const seen=new Set();
+   while(s>=0&&s<miniFat.length&&!seen.has(s)&&o<size&&guard++<10000){
+    seen.add(s);
+    const off=s*64;
+    if(off+64>rootMiniBytes.byteLength)break;
+    const n=Math.min(64,size-o);
+    out.set(rootMiniBytes.subarray(off,off+n),o);
+    o+=n;s=miniFat[s];
+   }
+   return out;
+  };
+
+  const entries=[];
+  for(let off=0;off+128<=dirBytes.byteLength;off+=128){
+   const type=dirBytes[off+66];
+   const nameLen=dirView.getUint16(off+64,true);
+   if(!type||nameLen<2)continue;
+   const name=new TextDecoder('utf-16le').decode(dirBytes.subarray(off,off+Math.min(64,nameLen-2)));
+   const startSec=dirView.getInt32(off+116,true);
+   const size=dirView.getUint32(off+120,true);
+   if(type===5&&startSec>=0)rootMiniBytes=readChain(startSec,4*1024*1024);
+   else if(type===2&&size>0&&size<16*1024*1024)entries.push({name,startSec,size});
+  }
+
+  for(const ent of entries){
+   // Skip preview images/thumbnails
+   if(/preview|ole10|summaryinformation/i.test(ent.name))continue;
+   const data=ent.size<4096&&rootMiniBytes?readMiniChain(ent.startSec,ent.size):readChain(ent.startSec,ent.size).subarray(0,ent.size);
+   if(data.byteLength>0)streams.push({name:ent.name,data});
+  }
+ }catch(e){console.warn('OLE parse err:',e);}
+ return streams;
+}
+
+async function analyzeSldasmBuffer(buf,assyCode,knownCodes){
  if(!buf||buf.byteLength<32)return{};
  const bom={};
  try{
   const u8=new Uint8Array(buf);
-  const str16=new TextDecoder('utf-16le',{fatal:false}).decode(u8);
-  const str8=new TextDecoder('latin1').decode(u8);
+  const textBlobs=[...decodeAllTexts(u8)];
+
+  // 1. Extract OLE2 streams and decompress any zlib-compressed streams (swXmlContents, Contents, Header2, Config-*)
+  const oleStreams=extractOleStreams(buf);
+  for(const strm of oleStreams){
+   textBlobs.push(...decodeAllTexts(strm.data));
+   // Check if stream starts with zlib header (0x78 0x9C / 0x78 0xDA / 0x78 0x01 / 0x78 0x5E)
+   if(strm.data.byteLength>8&&strm.data[0]===0x78&&[0x9C,0xDA,0x01,0x5E].includes(strm.data[1])){
+    const inf=await tryInflateZlib(strm.data);
+    if(inf)textBlobs.push(...decodeAllTexts(inf));
+   }else{
+    // Also scan inside stream for embedded zlib blocks
+    for(let i=0;i<strm.data.byteLength-16;i++){
+     if(strm.data[i]===0x78&&(strm.data[i+1]===0x9C||strm.data[i+1]===0xDA)){
+      const inf=await tryInflateZlib(strm.data.subarray(i,Math.min(strm.data.byteLength,i+2*1024*1024)));
+      if(inf&&inf.byteLength>32){textBlobs.push(...decodeAllTexts(inf));i+=32;}
+     }
+    }
+   }
+  }
+
   const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const candidates=(knownCodes||codes).filter(p=>p&&p!==assyCode).sort((a,b)=>b.length-a.length);
 
   candidates.forEach(p=>{
    const ep=escRe(p);
-   // 1. Check if filename (part.sldprt / part.sldasm) or instance (part-1 / part<1>) is referenced
    const fileRe=new RegExp('(?:^|[^A-Za-z0-9_\\-])'+ep+'\\.(?:sldprt|sldasm|prt|asm)(?:[^A-Za-z0-9_\\-]|$)','i');
-   const instRe=new RegExp('(?:[\\x00\\\\/:]|^)'+ep+'(?:-(\\d{1,3})|<(\\d{1,3})>)(?:[\\x00>\\r\\n]|$)','g');
+   const instRe=new RegExp('(?:[\\x00\\\\/:<>"\'\\s,=]|^)'+ep+'(?:-(\\d{1,3})|<(\\d{1,3})>)(?:[\\x00>\\r\\n\\s"\'<,]|$)','g');
 
-   const hasFileRef=fileRe.test(str16)||fileRe.test(str8);
+   let hasFileRef=false;
    const instIds=new Set();
-   let m;
-   while((m=instRe.exec(str16))!==null){const n=parseInt(m[1]||m[2],10);if(n>=1&&n<=500)instIds.add(n);}
-   instRe.lastIndex=0;
-   while((m=instRe.exec(str8))!==null){const n=parseInt(m[1]||m[2],10);if(n>=1&&n<=500)instIds.add(n);}
+
+   for(const txt of textBlobs){
+    if(!hasFileRef&&fileRe.test(txt))hasFileRef=true;
+    instRe.lastIndex=0;
+    let m;
+    while((m=instRe.exec(txt))!==null){
+     const n=parseInt(m[1]||m[2],10);
+     if(n>=1&&n<=500)instIds.add(n);
+    }
+   }
 
    if(hasFileRef||instIds.size>0){
     bom[p]=instIds.size>0?instIds.size:1;
@@ -693,23 +850,26 @@ function analyzeSldasmBuffer(buf,assyCode,knownCodes){
 async function fetchAssemblyBuffer(assyCode){
  if(localCadFiles&&localCadFiles[assyCode]){
   const f=localCadFiles[assyCode];
-  return await (f.size>15*1024*1024?f.slice(0,4*1024*1024):f).arrayBuffer();
+  return {buf:await (f.size>25*1024*1024?f.slice(0,8*1024*1024):f).arrayBuffer()};
  }
  const fid=st.driveFileIds&&st.driveFileIds[assyCode];
- if(fid&&st.googleToken){
-  const res=await fetch(`https://www.googleapis.com/drive/v3/files/${fid}?alt=media`,{
-   headers:{Authorization:'Bearer '+st.googleToken}
-  });
-  if(res.ok)return await res.arrayBuffer();
- }
- return null;
+ if(!fid)return {err:'Missing Drive file ID (click ⟳ Refresh to re-scan Drive)'};
+ if(!st.googleToken)return {err:'Not signed in with Google'};
+ const res=await fetch(`https://www.googleapis.com/drive/v3/files/${fid}?alt=media&supportsAllDrives=true`,{
+  headers:{Authorization:'Bearer '+st.googleToken}
+ });
+ if(!res.ok)return {err:'Drive download HTTP '+res.status};
+ return {buf:await res.arrayBuffer()};
 }
 
 async function analyzeSingleAssembly(assyCode){
  try{
-  const buf=await fetchAssemblyBuffer(assyCode);
-  if(!buf)return null;
-  const bom=analyzeSldasmBuffer(buf,assyCode,codes);
+  const fetched=await fetchAssemblyBuffer(assyCode);
+  if(!fetched||!fetched.buf){
+   if($('addmsg')&&fetched&&fetched.err)$('addmsg').textContent=assyCode+': '+fetched.err;
+   return null;
+  }
+  const bom=await analyzeSldasmBuffer(fetched.buf,assyCode,codes);
   st.bom=st.bom||{};
   if(Object.keys(bom).length>0){
    st.bom[assyCode]=bom;
@@ -721,15 +881,26 @@ async function analyzeSingleAssembly(assyCode){
 
 async function analyzeAllAssemblies(){
  const assys=codes.filter(c=>FILES[c]&&FILES[c][0]==='A');
- if(!assys.length)return 0;
- let analyzed=0;
+ if(!assys.length){
+  if($('addmsg'))$('addmsg').textContent='No .sldasm assemblies found in library';
+  return 0;
+ }
+ let analyzed=0,lastErr='';
  if($('addmsg'))$('addmsg').textContent=`Analyzing ${assys.length} .sldasm file(s) for BOM…`;
  for(const a of assys){
-  const bom=await analyzeSingleAssembly(a);
-  if(bom&&Object.keys(bom).length>0)analyzed++;
+  const fetched=await fetchAssemblyBuffer(a);
+  if(!fetched||!fetched.buf){lastErr=fetched&&fetched.err?fetched.err:'Fetch failed';continue;}
+  const bom=await analyzeSldasmBuffer(fetched.buf,a,codes);
+  st.bom=st.bom||{};
+  if(Object.keys(bom).length>0){
+   st.bom[a]=bom;
+   analyzed++;
+  }
  }
- rLib();
- if($('addmsg'))$('addmsg').textContent=`Analyzed ${assys.length} .sldasm (${analyzed} with BOM parts) ✓`;
+ save();rLib();
+ if($('addmsg')){
+  $('addmsg').textContent=lastErr&&!analyzed?`BOM analysis failed: ${lastErr}`:`Analyzed ${assys.length} .sldasm (${analyzed} with BOM parts) ✓`;
+ }
  return analyzed;
 }
 
