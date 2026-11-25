@@ -180,7 +180,43 @@ const save=()=>{
 };
 const M=c=>st.meta[c]||(st.meta[c]={mat:MAT0[c]||'',cost:0});
 const G=c=>st.meta[c]||{mat:MAT0[c]||'',cost:0}; // read-only, doesn't create state
-const htmlLink=c=>HTML[c]?`<a class="b" target="_blank" rel="noopener" href="https://drive.google.com/file/d/${HTML[c]}/view">Open HTML</a>`:'<span class="mt">—</span>';
+async function openHtmlDirect(c,ev){
+ if(ev)ev.preventDefault();
+ const fid=HTML[c];
+ if(!fid)return;
+ const dlUrl=`https://drive.google.com/uc?export=download&id=${encodeURIComponent(fid)}`;
+ // Open tab synchronously inside click handler to avoid popup blockers
+ const win=window.open('','_blank');
+ if(win){try{win.document.title=c+'.html';win.document.body.innerHTML='<p style="font-family:sans-serif;padding:24px;">Downloading and opening '+esc(c)+'.html…</p>';}catch(e){}}
+ try{
+  let blob=null;
+  if(localCadFiles&&localCadFiles[c+'.html']){
+   blob=new Blob([await localCadFiles[c+'.html'].arrayBuffer()],{type:'text/html'});
+  }else if(st.googleToken&&!/\.(html|htm)$/i.test(fid)){
+   const res=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fid)}?alt=media&supportsAllDrives=true`,{
+    headers:{Authorization:'Bearer '+st.googleToken}
+   });
+   if(res.ok){
+    const txt=await res.text();
+    blob=new Blob([txt],{type:'text/html'});
+   }
+  }
+  if(blob){
+   const u=URL.createObjectURL(blob);
+   const a=document.createElement('a');
+   a.href=u;a.download=c+'.html';
+   document.body.appendChild(a);a.click();a.remove();
+   if(win){win.location.href=u;}
+   else{window.open(u,'_blank');}
+   setTimeout(()=>URL.revokeObjectURL(u),60000);
+   return;
+  }
+ }catch(e){console.warn('Direct HTML open/download error:',e);}
+ // Fallback: direct Google Drive download link
+ if(win){win.location.href=dlUrl;}
+ else{window.open(dlUrl,'_blank');}
+}
+const htmlLink=c=>HTML[c]?`<a class="b" href="https://drive.google.com/uc?export=download&id=${encodeURIComponent(HTML[c])}" onclick="openHtmlDirect('${esc(c).replace(/'/g,"\\'")}',event)" title="Download &amp; open ${esc(c)}.html in Chrome">Open HTML</a>`:'<span class="mt">—</span>';
 const pdfLink=c=>PDF[c]?`<a class="b" target="_blank" rel="noopener" href="https://drive.google.com/file/d/${PDF[c]}/view">Open PDF</a>`:'<span class="mt">—</span>';
 const codeOpts=(sel,t)=>{const opts=codes.filter(c=>!t||FILES[c][0]===t).map(c=>`<option ${c===sel?'selected':''}>${esc(c)}</option>`);if(sel&&!codes.includes(sel))opts.unshift(`<option selected>${esc(sel)}</option>`);return opts.join('')};
 
@@ -395,7 +431,7 @@ function mkPdf(){
   if(y+h>H-40){d.addPage();y=18;hdr()}
   txt(i+1,L+1);txt(r.c,L+8);d.text(desc,L+34,y);
   if(PDF[r.c]){d.setTextColor(11,95,255);d.textWithLink('Open PDF',94,y,{url:'https://drive.google.com/file/d/'+PDF[r.c]+'/view'});d.setTextColor(0,0,0)}else txt('-',94);
-  if(HTML[r.c]){d.setTextColor(11,95,255);d.textWithLink('Open HTML',115,y,{url:'https://drive.google.com/file/d/'+HTML[r.c]+'/view'});d.setTextColor(0,0,0)}else txt('-',115);
+  if(HTML[r.c]){d.setTextColor(11,95,255);d.textWithLink('Open HTML',115,y,{url:'https://drive.google.com/uc?export=download&id='+encodeURIComponent(HTML[r.c])});d.setTextColor(0,0,0)}else txt('-',115);
   txt(r.q,138,{align:'right'});txt(rs(r.r),166,{align:'right'});txt(rs(amt),R-1,{align:'right'});
   y+=h;d.setDrawColor(217,221,227);d.line(L,y-3.2,R,y-3.2)});
  if(!st.po.length){txt('No lines',L+1);y+=6}
@@ -1160,6 +1196,7 @@ $('cad_dir_input').onchange=async e=>{
   const ext=m[1].toLowerCase();
   const c=f.name.slice(0,-m[0].length).trim();
   if(!c)continue;
+  if(['html','htm'].includes(ext)){localCadFiles[c+'.html']=f;}
   if(['sldprt','sldasm','prt','asm'].includes(ext)){
    localCadFiles[c]=f;
    try {
