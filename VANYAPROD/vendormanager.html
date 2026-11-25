@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CAD Data Portal – PO</title>
@@ -65,7 +65,7 @@ header{display:flex;justify-content:space-between;gap:12px;align-items:center;fl
   <label>Series<select id="fs"></select></label>
   <label>Type<select id="ft"><option value="">All</option><option value="P">Parts (.sldprt)</option><option value="A">Assemblies (.sldasm)</option></select></label>
  </div>
- <div class="row" style="margin-top:10px;align-items:center"><button class="b p" id="addsel" disabled>Add selected to PO (0)</button><button class="b" id="viewpo">View PO (0 lines) →</button><span class="mt" id="addmsg"></span></div></div>
+ <div class="row" style="margin-top:10px;align-items:center"><button class="b p" id="addsel" disabled>Add selected to PO (0)</button><button class="b" id="viewpo">View PO (0 lines) →</button><button class="b" id="analyze_bom_btn" title="Analyze .sldasm files to extract used .sldprt parts and quantities">🔍 Analyze .sldasm BOMs</button><span class="mt" id="addmsg"></span></div></div>
  <div class="card"><div class="w"><table><thead><tr><th style="width:32px"><input type="checkbox" id="all" title="Select all shown" style="width:auto"></th><th>Code</th><th>Type</th><th>Drawing</th><th>PDF</th><th>HTML</th><th>Material</th><th class="n">Cost (₹)</th><th></th></tr></thead><tbody id="lb"></tbody></table></div>
  <p class="mt" id="lc"></p></div>
  <p class="mt">Costs and materials are fetched from SolidWorks (.sldprt / .sldasm) custom file properties and Google Drive metadata, and stored locally in this browser (not in Firestore). PDF links open the file from your Google Drive.</p>
@@ -192,10 +192,92 @@ $('nav').onclick=e=>{if(e.target.dataset.t)go(e.target.dataset.t)};
 
 // library
 $('fs').innerHTML='<option value="">All</option>'+[...new Set(codes.map(ser))].map(s=>`<option>${s}</option>`).join('');
-let sel=new Set(),vis=[];
+let sel=new Set(),vis=[],openBom=new Set(),localCadFiles={};
 function updBar(){const n=sel.size;$('addsel').textContent='Add selected to PO ('+n+')';$('addsel').disabled=!n;$('viewpo').textContent='View PO ('+st.po.length+' line'+(st.po.length===1?'':'s')+') →'}
-function addToPo(list){let a=0,u=0;list.forEach(c=>{const e=st.po.find(x=>x.c===c);if(e){e.q+=1;u++}else{st.po.push({c,q:1,r:G(c).cost||0});a++}});
- save();updBar();$('addmsg').textContent=(a?a+' added':'')+(a&&u?', ':'')+(u?u+' quantity increased':'')+' ✓'}
+
+// Expand assembly BOM recursively (with cycle guard) into flat {partCode: qty}
+function expandBomFlat(code, mult=1, visited=new Set()){
+ const out={};
+ const bom=st.bom&&st.bom[code];
+ if(!bom||!Object.keys(bom).length||visited.has(code)){
+  out[code]=(out[code]||0)+mult;
+  return out;
+ }
+ visited.add(code);
+ Object.entries(bom).forEach(([p,q])=>{
+  const qty=(+q||0)*mult;
+  if(qty<=0)return;
+  if(FILES[p]&&FILES[p][0]==='A'&&st.bom&&st.bom[p]&&Object.keys(st.bom[p]).length&&!visited.has(p)){
+   const sub=expandBomFlat(p,qty,new Set(visited));
+   Object.entries(sub).forEach(([sp,sq])=>{out[sp]=(out[sp]||0)+sq});
+  }else{
+   out[p]=(out[p]||0)+qty;
+  }
+ });
+ return out;
+}
+
+function addToPo(list){
+ let a=0,u=0,expandedAssys=0;
+ const flat={};
+ list.forEach(c=>{
+  if(FILES[c]&&FILES[c][0]==='A'&&st.bom&&st.bom[c]&&Object.keys(st.bom[c]).length){
+   expandedAssys++;
+   const parts=expandBomFlat(c,1);
+   Object.entries(parts).forEach(([p,q])=>{flat[p]=(flat[p]||0)+q});
+  }else{
+   flat[c]=(flat[c]||0)+1;
+  }
+ });
+ Object.entries(flat).forEach(([c,qty])=>{
+  const e=st.po.find(x=>x.c===c);
+  if(e){e.q+=qty;u++}
+  else{st.po.push({c,q:qty,r:G(c).cost||0});a++}
+ });
+ save();updBar();
+ const prefix=expandedAssys?`BOM expanded (${expandedAssys} assy): `:'';
+ $('addmsg').textContent=prefix+(a?a+' added':'')+(a&&u?', ':'')+(u?u+' quantity increased':'')+' ✓';
+}
+
+function renderBomSubRow(c){
+ const bom=(st.bom&&st.bom[c])||{};
+ const entries=Object.entries(bom);
+ const partOpts=codes.filter(p=>p!==c).map(p=>`<option value="${esc(p)}">${esc(p)}${FILES[p]&&FILES[p][0]==='A'?' (Assy)':''}</option>`).join('');
+ let tot=0;
+ const rows=entries.map(([p,q])=>{
+  const uCost=G(p).cost||0;
+  const sub=(+q||0)*uCost;
+  tot+=sub;
+  const pType=FILES[p]?(FILES[p][0]==='A'?'Assembly':'Part'):'Part';
+  return `<tr>
+   <td><b>${esc(p)}</b></td>
+   <td><span class="tag ${FILES[p]&&FILES[p][0]==='A'?'a':''}">${pType}</span></td>
+   <td>${pdfLink(p)}</td>
+   <td>${htmlLink(p)}</td>
+   <td>${esc(G(p).mat)||'<span class="mt">—</span>'}</td>
+   <td class="n">${inr(uCost)}</td>
+   <td class="n"><input class="n" type="number" min="1" step="1" style="width:70px" data-bom-a="${esc(c)}" data-bom-p="${esc(p)}" value="${+q||1}"></td>
+   <td class="n"><b>${inr(sub)}</b></td>
+   <td><button type="button" class="b" data-bom-del="${esc(c)}" data-bom-p="${esc(p)}" title="Remove from BOM">✕</button></td>
+  </tr>`;
+ }).join('');
+ return `<tr class="bom-row"><td colspan="9" style="background:rgba(11,95,255,0.04);padding:12px 16px;border-bottom:2px solid var(--bd);">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+   <div><strong>📋 Bill of Materials — ${esc(c)}</strong> <span class="mt">(${entries.length} part${entries.length===1?'':'s'} · Total BOM Cost: <b>${inr(tot)}</b>)</span></div>
+   <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+    <select id="bom-add-sel-${esc(c)}" style="width:auto;min-width:160px;font-size:12px;padding:4px 8px;"><option value="">+ Add part to BOM…</option>${partOpts}</select>
+    <button type="button" class="b" data-bom-add="${esc(c)}">+ Add</button>
+    <button type="button" class="b" data-bom-scan="${esc(c)}">⟳ Re-analyze .sldasm</button>
+    <button type="button" class="b p" data-add="${esc(c)}" ${entries.length?'':'disabled'}>Release BOM to PO</button>
+   </div>
+  </div>
+  ${entries.length?`<table style="width:100%;font-size:12.5px;background:var(--sf);border:1px solid var(--bd);border-radius:6px;">
+   <thead><tr><th>Part Code</th><th>Type</th><th>PDF</th><th>HTML</th><th>Material</th><th class="n">Unit Cost</th><th class="n">Qty / Assy</th><th class="n">Subtotal</th><th></th></tr></thead>
+   <tbody>${rows}</tbody>
+  </table>`:'<div class="mt" style="padding:8px 0;">No used parts detected yet. Click <strong>⟳ Re-analyze .sldasm</strong> or add parts manually above.</div>'}
+ </td></tr>`;
+}
+
 function rLib(){
  const q=$('q').value.toLowerCase(),fs=$('fs').value,ft=$('ft').value;
  if(codes.length===0){
@@ -207,17 +289,63 @@ function rLib(){
   updBar();return;
  }
  const l=codes.filter(c=>(!fs||ser(c)===fs)&&(!ft||FILES[c][0]===ft)&&(!q||(c+' '+G(c).mat).toLowerCase().includes(q)));
- $('lb').innerHTML=l.map(c=>{const f=FILES[c];return `<tr><td><input type="checkbox" style="width:auto" data-sel="${esc(c)}" ${sel.has(c)?'checked':''}></td><td><b>${esc(c)}</b></td><td><span class="tag ${f[0]==='A'?'a':''}">${f[0]==='A'?'Assembly':'Part'}</span></td><td>${f[1]?'<span class="ok">✓ .slddrw</span>':'<span class="mt">—</span>'}</td><td>${pdfLink(c)}</td><td>${htmlLink(c)}</td><td><input data-c="${esc(c)}" data-k="mat" value="${esc(G(c).mat)}" placeholder="Material"></td><td class="n"><input class="n" type="number" min="0" step="any" data-c="${esc(c)}" data-k="cost" value="${G(c).cost||''}" placeholder="0"></td><td><button class="b" data-add="${esc(c)}">+ PO</button></td></tr>`}).join('');
+ $('lb').innerHTML=l.map(c=>{
+  const f=FILES[c];
+  const isAssy=f[0]==='A';
+  const bomCount=isAssy&&st.bom&&st.bom[c]?Object.keys(st.bom[c]).length:0;
+  const bomBtn=isAssy?`<button type="button" class="b" data-bom-tog="${esc(c)}" style="margin-right:4px;" title="View / edit .sldasm Bill of Materials">📋 BOM (${bomCount})</button>`:'';
+  const mainRow=`<tr><td><input type="checkbox" style="width:auto" data-sel="${esc(c)}" ${sel.has(c)?'checked':''}></td><td><b>${esc(c)}</b></td><td><span class="tag ${isAssy?'a':''}">${isAssy?'Assembly':'Part'}</span></td><td>${f[1]?'<span class="ok">✓ .slddrw</span>':'<span class="mt">—</span>'}</td><td>${pdfLink(c)}</td><td>${htmlLink(c)}</td><td><input data-c="${esc(c)}" data-k="mat" value="${esc(G(c).mat)}" placeholder="Material"></td><td class="n"><input class="n" type="number" min="0" step="any" data-c="${esc(c)}" data-k="cost" value="${G(c).cost||''}" placeholder="0"></td><td style="white-space:nowrap;">${bomBtn}<button class="b" data-add="${esc(c)}" title="${isAssy&&bomCount?'Release BOM parts & quantities to PO':'Add to PO'}">+ PO</button></td></tr>`;
+  return mainRow+(isAssy&&openBom.has(c)?renderBomSubRow(c):'');
+ }).join('');
  vis=l;$('all').checked=l.length>0&&l.every(c=>sel.has(c));updBar();
  $('lc').textContent=l.length+' of '+codes.length+' items · PDFs on Drive for '+Object.keys(PDF).length+' items · HTML for '+Object.keys(HTML).length+' items';
 }
 ['q','fs','ft'].forEach(i=>$(i).oninput=rLib);
-$('lb').onclick=e=>{const c=e.target.dataset.add;if(c){addToPo([c]);e.target.textContent='Added ✓';setTimeout(()=>{e.target.textContent='+ PO'},1200)}};
+$('lb').onclick=e=>{
+ const tog=e.target.dataset.bomTog;
+ if(tog){openBom.has(tog)?openBom.delete(tog):openBom.add(tog);rLib();return;}
+ const bAdd=e.target.dataset.bomAdd;
+ if(bAdd){
+  const selEl=document.getElementById('bom-add-sel-'+bAdd);
+  const p=selEl&&selEl.value;
+  if(!p)return;
+  st.bom=st.bom||{};st.bom[bAdd]=st.bom[bAdd]||{};
+  st.bom[bAdd][p]=(st.bom[bAdd][p]||0)+1;
+  save();rLib();return;
+ }
+ const bDel=e.target.dataset.bomDel;
+ if(bDel){
+  const p=e.target.dataset.bomP;
+  if(st.bom&&st.bom[bDel]){delete st.bom[bDel][p];save();rLib();}
+  return;
+ }
+ const bScan=e.target.dataset.bomScan;
+ if(bScan){
+  e.target.textContent='Analyzing…';e.target.disabled=true;
+  analyzeSingleAssembly(bScan).then(()=>{rLib()});
+  return;
+ }
+ const c=e.target.dataset.add;
+ if(c){addToPo([c]);e.target.textContent='Added ✓';setTimeout(()=>{e.target.textContent='+ PO'},1200)}
+};
 $('lb').onchange=e=>{const c=e.target.dataset.sel;if(c){e.target.checked?sel.add(c):sel.delete(c);$('all').checked=vis.length>0&&vis.every(x=>sel.has(x));updBar()}};
 $('all').onchange=e=>{vis.forEach(c=>e.target.checked?sel.add(c):sel.delete(c));rLib()};
 $('addsel').onclick=()=>{addToPo([...sel]);sel.clear();rLib()};
 $('viewpo').onclick=()=>go('po');
-$('lb').oninput=e=>{const d=e.target.dataset;if(!d.c)return;M(d.c)[d.k]=d.k==='cost'?+e.target.value:e.target.value;save();if(d.k==='cost'||d.k==='mat')saveCostToDrive(d.c,M(d.c).cost,M(d.c).mat)};
+$('lb').oninput=e=>{
+ const d=e.target.dataset;
+ if(d.bomA&&d.bomP){
+  st.bom=st.bom||{};st.bom[d.bomA]=st.bom[d.bomA]||{};
+  st.bom[d.bomA][d.bomP]=Math.max(1,+e.target.value||1);
+  save();
+  // Update subtotal cell in place without losing input focus
+  const row=e.target.closest('tr');
+  if(row&&row.cells[7])row.cells[7].innerHTML='<b>'+inr(st.bom[d.bomA][d.bomP]*(G(d.bomP).cost||0))+'</b>';
+  return;
+ }
+ if(!d.c)return;
+ M(d.c)[d.k]=d.k==='cost'?+e.target.value:e.target.value;save();if(d.k==='cost'||d.k==='mat')saveCostToDrive(d.c,M(d.c).cost,M(d.c).mat)
+};
 
 // PO
 const F=['pn','pd','pv','vn','vg','vc','va','sa','gp','tn','vk','vp','pr','bt','ba','sn','ptm','txm','spt','og','oc','as','rm','op'];
@@ -530,6 +658,81 @@ async function saveCostToDrive(code,cost,mat){
  }catch(e){console.warn('Drive cost save failed:',e);}
 }
 
+// ---- SolidWorks (.sldasm) Assembly BOM File Analyzer ----
+function analyzeSldasmBuffer(buf,assyCode,knownCodes){
+ if(!buf||buf.byteLength<32)return{};
+ const bom={};
+ try{
+  const u8=new Uint8Array(buf);
+  const str16=new TextDecoder('utf-16le',{fatal:false}).decode(u8);
+  const str8=new TextDecoder('latin1').decode(u8);
+  const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const candidates=(knownCodes||codes).filter(p=>p&&p!==assyCode).sort((a,b)=>b.length-a.length);
+
+  candidates.forEach(p=>{
+   const ep=escRe(p);
+   // 1. Check if filename (part.sldprt / part.sldasm) or instance (part-1 / part<1>) is referenced
+   const fileRe=new RegExp('(?:^|[^A-Za-z0-9_\\-])'+ep+'\\.(?:sldprt|sldasm|prt|asm)(?:[^A-Za-z0-9_\\-]|$)','i');
+   const instRe=new RegExp('(?:[\\x00\\\\/:]|^)'+ep+'(?:-(\\d{1,3})|<(\\d{1,3})>)(?:[\\x00>\\r\\n]|$)','g');
+
+   const hasFileRef=fileRe.test(str16)||fileRe.test(str8);
+   const instIds=new Set();
+   let m;
+   while((m=instRe.exec(str16))!==null){const n=parseInt(m[1]||m[2],10);if(n>=1&&n<=500)instIds.add(n);}
+   instRe.lastIndex=0;
+   while((m=instRe.exec(str8))!==null){const n=parseInt(m[1]||m[2],10);if(n>=1&&n<=500)instIds.add(n);}
+
+   if(hasFileRef||instIds.size>0){
+    bom[p]=instIds.size>0?instIds.size:1;
+   }
+  });
+ }catch(e){console.warn('SLDASM BOM analysis error for '+assyCode+':',e);}
+ return bom;
+}
+
+async function fetchAssemblyBuffer(assyCode){
+ if(localCadFiles&&localCadFiles[assyCode]){
+  const f=localCadFiles[assyCode];
+  return await (f.size>15*1024*1024?f.slice(0,4*1024*1024):f).arrayBuffer();
+ }
+ const fid=st.driveFileIds&&st.driveFileIds[assyCode];
+ if(fid&&st.googleToken){
+  const res=await fetch(`https://www.googleapis.com/drive/v3/files/${fid}?alt=media`,{
+   headers:{Authorization:'Bearer '+st.googleToken}
+  });
+  if(res.ok)return await res.arrayBuffer();
+ }
+ return null;
+}
+
+async function analyzeSingleAssembly(assyCode){
+ try{
+  const buf=await fetchAssemblyBuffer(assyCode);
+  if(!buf)return null;
+  const bom=analyzeSldasmBuffer(buf,assyCode,codes);
+  st.bom=st.bom||{};
+  if(Object.keys(bom).length>0){
+   st.bom[assyCode]=bom;
+   save();
+  }
+  return bom;
+ }catch(e){console.warn('Analyze single assembly err:',e);return null;}
+}
+
+async function analyzeAllAssemblies(){
+ const assys=codes.filter(c=>FILES[c]&&FILES[c][0]==='A');
+ if(!assys.length)return 0;
+ let analyzed=0;
+ if($('addmsg'))$('addmsg').textContent=`Analyzing ${assys.length} .sldasm file(s) for BOM…`;
+ for(const a of assys){
+  const bom=await analyzeSingleAssembly(a);
+  if(bom&&Object.keys(bom).length>0)analyzed++;
+ }
+ rLib();
+ if($('addmsg'))$('addmsg').textContent=`Analyzed ${assys.length} .sldasm (${analyzed} with BOM parts) ✓`;
+ return analyzed;
+}
+
 // ---- Process CAD Files (SolidWorks .sldprt/.sldasm/.slddrw, PDF, 3D HTML) ----
 function processScannedCadFiles(fileList){
  let parts=0,assys=0,drawings=0,pdfs=0,htmls=0;
@@ -542,7 +745,9 @@ function processScannedCadFiles(fileList){
   const c=raw.slice(0,-m[0].length).trim();
   if(!c)return;
 
-  if(f.id)st.driveFileIds[c]=f.id;
+  // Store CAD file ID specifically for .sldprt/.sldasm so PDF/HTML doesn't overwrite it
+  if(f.id&&['sldprt','sldasm','prt','asm'].includes(ext))st.driveFileIds[c]=f.id;
+  else if(f.id&&!st.driveFileIds[c])st.driveFileIds[c]=f.id;
 
   // Extract custom properties from Drive file metadata
   const metaProps=extractPropsFromDriveMeta(f);
@@ -803,15 +1008,28 @@ async function scanGoogleDrive(folderInput, apiKeyInput){
   })();
  }
 
+ // Automatically analyze .sldasm files to build assembly BOMs
+ if(stats.assys > 0 && st.googleToken){
+  analyzeAllAssemblies();
+ }
+
  return true;
 }
 
 // Drive Modal Button Wiring
+$('analyze_bom_btn').onclick=async()=>{
+ $('analyze_bom_btn').disabled=true;
+ $('analyze_bom_btn').textContent='🔍 Analyzing…';
+ await analyzeAllAssemblies();
+ $('analyze_bom_btn').disabled=false;
+ $('analyze_bom_btn').textContent='🔍 Analyze .sldasm BOMs';
+};
 $('drv_scan_btn').onclick=()=>scanGoogleDrive($('drv_folder').value,$('drv_key').value);
 $('drv_local_btn').onclick=()=>$('cad_dir_input').click();
 $('cad_dir_input').onchange=async e=>{
  const files=Array.from(e.target.files||[]);
  if(!files.length)return;
+ localCadFiles={};
  const fileList=files.map(f=>({name:f.name,id:f.name}));
  const stats=processScannedCadFiles(fileList);
  for(const f of files){
@@ -821,6 +1039,7 @@ $('cad_dir_input').onchange=async e=>{
   const c=f.name.slice(0,-m[0].length).trim();
   if(!c)continue;
   if(['sldprt','sldasm','prt','asm'].includes(ext)){
+   localCadFiles[c]=f;
    try {
     const slice = await f.slice(0, 131072).arrayBuffer();
     const props = parseSolidWorksCustomProps(slice);
@@ -829,6 +1048,7 @@ $('cad_dir_input').onchange=async e=>{
    } catch(err){ console.warn('Local CAD parse err:', err); }
   }
  }
+ await analyzeAllAssemblies();
  save();rLib();
  const summary=`Local CAD scan ✓ Found ${fileList.length} files (${stats.parts} parts, ${stats.assys} assys, ${stats.drawings} drawings, ${stats.pdfs} PDFs)`;
  $('drv_status').innerHTML=`<span style="color:var(--ok)">✓ ${summary}</span>`;
